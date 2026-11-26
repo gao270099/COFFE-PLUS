@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="screen-orientation" content="landscape">
+<meta name="x5-orientation" content="landscape">
+<meta name="theme-color" content="#f9f2e0">
+<meta name="mobile-web-app-capable" content="yes">
+<title>智能咖啡烘焙控制台 · 学习版</title>
+<style>
+:root{
+  --paper:#f9f2e0; --paper2:#fffaf0; --ink:#2b2b2b; --cinnabar:#a61b1b;
+  --gold:#c5a059; --coffee:#6b4a2f; --green:#4a6b3a; --blue:#2e5c8a;
+  --line:#e0d5b8; --muted:#7d7466;
+  --safe-t:env(safe-area-inset-top, 0px);
+  --safe-b:env(safe-area-inset-bottom, 0px);
+  --safe-l:env(safe-area-inset-left, 0px);
+  --safe-r:env(safe-area-inset-right, 0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  line-height:1.5;font-size:14.5px;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+
+header{position:sticky;top:0;z-index:30;background:rgba(249,242,224,0.96);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-bottom:1.5px solid var(--gold);
+  padding:calc(4px + var(--safe-t)) calc(10px + var(--safe-r)) 4px calc(10px + var(--safe-l));
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap;}
+header h1{margin:0;font-size:14.5px;color:var(--cinnabar);letter-spacing:.3px;line-height:1.15;white-space:nowrap;}
+header .sub{display:none;}
+.badge{display:inline-block;border:1px solid var(--cinnabar);color:var(--cinnabar);
+  font-size:8.5px;padding:0 5px;border-radius:6px;margin-left:4px;vertical-align:middle;}
+.badge.learn{background:var(--cinnabar);color:#fff;}
+.hdr-btns{display:flex;gap:5px;align-items:center;flex:none;}
+
+.mode-sel{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--coffee);
+  background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;min-height:26px;}
+.mode-sel b{font-size:10.5px;font-weight:600;white-space:nowrap;}
+.mode-sel select{padding:1px 4px;font-size:12px;font-weight:700;border:1px solid var(--gold);
+  border-radius:5px;background:var(--paper2);color:var(--cinnabar);cursor:pointer;}
+
+.wrap{max-width:1280px;margin:0 auto;
+  padding:10px calc(14px + var(--safe-r)) calc(66px + var(--safe-b)) calc(14px + var(--safe-l));}
+
+.panel{background:var(--paper2);border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;margin-bottom:12px;box-shadow:0 2px 6px rgba(107,74,47,.05);}
+.panel h2{font-size:15px;color:var(--cinnabar);margin:0 0 10px;padding-bottom:6px;
+  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.panel h2 .n{background:var(--cinnabar);color:#fff;width:21px;height:21px;border-radius:50%;
+  font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;flex:none;}
+.panel h2 .tagx{font-size:10.5px;color:var(--green);border:1px solid var(--green);
+  border-radius:8px;padding:1px 7px;font-weight:400;}
+
+.grid-top{display:grid;grid-template-columns:1.05fr 1.35fr 0.95fr;gap:12px;align-items:start;}
+@media(max-width:960px){.grid-top{grid-template-columns:1fr 1fr;}}
+@media(max-width:640px){.grid-top{grid-template-columns:1fr;}}
+
+.filters{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+.filters input{flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--line);
+  border-radius:8px;background:#fff;font-size:15px;color:var(--ink);}
+.chip-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.chip-row::-webkit-scrollbar{display:none;}
+.chip{border:1px solid var(--line);background:#fff;color:var(--coffee);border-radius:16px;
+  padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;flex:none;}
+.chip.on{background:var(--cinnabar);color:#fff;border-color:var(--cinnabar);font-weight:600;}
+
+.bean-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px;}
+@media(max-width:900px){.bean-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:560px){.bean-grid{grid-template-columns:repeat(2,1fr);}}
+.bean-card{border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 10px 20px;
+  cursor:pointer;position:relative;min-height:68px;}
+.bean-card:active{transform:scale(0.98);}
+.bean-card.sel{border:2px solid var(--cinnabar);background:#fff5f4;}
+.bean-card .nm{font-weight:600;font-size:12.5px;color:var(--ink);line-height:1.3;padding-right:30px;}
+.bean-card .meta{font-size:10.5px;color:var(--muted);margin-top:3px;}
+.bean-card .lv{position:absolute;top:8px;right:7px;font-size:9.5px;padding:1px 6px;border-radius:8px;
+  background:var(--paper);color:var(--coffee);border:1px solid var(--line);}
+.bean-card .cal{position:absolute;bottom:5px;left:10px;font-size:10px;color:var(--green);font-weight:600;}
+
+.modal-mask{position:fixed;inset:0;background:rgba(43,43,43,.55);display:none;
+  align-items:center;justify-content:center;z-index:60;padding:14px;}
+.modal-mask.show{display:flex;}
+.modal{background:var(--paper2);border:2px solid var(--gold);border-radius:14px;
+  width:100%;max-width:740px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:18px 20px calc(18px + var(--safe-b));position:relative;
+  box-shadow:0 12px 36px rgba(0,0,0,.3);}
+.modal .x{position:sticky;top:0;float:right;width:30px;height:30px;border-radius:50%;
+  background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:19px;color:var(--coffee);cursor:pointer;z-index:2;}
+.modal h3{margin:0 0 2px;font-size:19px;color:var(--cinnabar);padding-right:36px;}
+.modal .en{font-size:10.5px;color:var(--gold);letter-spacing:1.5px;margin-bottom:10px;}
+.modal .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0;}
+@media(max-width:600px){.modal .kv{grid-template-columns:repeat(2,1fr);}}
+.modal .kv div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12px;}
+.modal .kv b{color:var(--coffee);}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+.tag{background:#f3ead2;color:var(--coffee);font-size:11px;padding:3px 9px;border-radius:10px;}
+.tag.f{background:#fbe9e9;color:var(--cinnabar);}
+.modal p{font-size:13px;color:#4a3f2f;margin:8px 0;line-height:1.55;}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.modal .go{width:100%;background:var(--cinnabar);color:#fff;border:none;
+  padding:10px 12px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;}
+.modal .go.ghost{background:#fff;color:var(--coffee);border:1px solid var(--line);}
+
+/* ===== 狙击手 M1 可交互设备面板（手机横屏一屏完整适配） ===== */
+.m1panel{background:linear-gradient(160deg,#2b2b2b,#3a3a3a);border:1.5px solid var(--gold);color:#e8e2d4;
+  padding:6px 8px;margin-bottom:8px;}
+.m1-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:6px;margin-bottom:4px;
+  padding-bottom:3px;border-bottom:1px solid #555;}
+.m1-head .dev{font-size:11.5px;font-weight:700;color:var(--gold);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m1-head .dev small{color:#a9a094;letter-spacing:0;font-size:9px;font-weight:400;margin-left:4px;}
+.m1-mode{display:flex;gap:3px;flex:none;}
+.m1-mode button{border:1px solid #666;background:#444;color:#ccc;border-radius:4px;padding:2px 7px;
+  font-size:9.5px;cursor:pointer;min-height:21px;line-height:1;}
+.m1-mode button.on{background:var(--gold);color:#2b2b2b;border-color:var(--gold);font-weight:700;}
+
+.m1-reads{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.m1-read{background:#1f1f1f;border:1px solid #555;border-radius:5px;padding:3px 2px 2px;text-align:center;min-width:0;}
+.m1-read .k{font-size:8.5px;color:#9a9182;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.m1-read .v{font-size:13px;font-weight:700;color:#7fd1a8;line-height:1.15;font-variant-numeric:tabular-nums;margin-top:1px;white-space:nowrap;}
+.m1-read .v small{font-size:8px;color:#9a9182;font-weight:400;}
+.m1-read.heat .v{color:#ff9c6e;}
+.m1-read.dev .v{color:#ffd479;}
+.m1-read.stir .v{color:#8fd0d8;}
+.m1-read.aim .v{color:#e8e2d4;}
+.m1-read.overridden{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
+.m1-read.overridden .v::after{content:"手";font-size:7px;color:var(--gold);margin-left:1px;vertical-align:top;}
+.m1-slider{width:100%;height:10px;margin-top:1px;accent-color:var(--gold);cursor:pointer;background:transparent;display:block;}
+.m1-slider.tiny{height:10px;}
+
+@keyframes m1blink{0%,100%{box-shadow:0 0 0 0 rgba(197,160,89,.7);}50%{box-shadow:0 0 0 3px rgba(197,160,89,0);}}
+.m1-ev.blink{animation:m1blink 1.25s infinite;border-color:var(--gold);color:#fff;font-weight:700;}
+.m1-ev.blink span:first-child::before{content:"▶";color:var(--gold);margin-right:1px;}
+.m1-acts button.blink,.m1-mode button.blink{animation:m1blink 1.25s infinite;border-color:var(--gold);color:#fff;}
+
+.m1-ctl{display:grid;grid-template-columns:1.15fr 1fr;gap:5px;}
+.m1-box{background:#242424;border:1px solid #555;border-radius:6px;padding:4px 6px;}
+.m1-box .t{font-size:9px;color:var(--gold);font-weight:600;margin-bottom:3px;letter-spacing:.2px;line-height:1.1;}
+.m1-events{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;}
+.m1-ev{border:1px solid #666;background:#333;color:#ddd;border-radius:4px;padding:2px 4px;
+  font-size:9px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:21px;white-space:nowrap;}
+.m1-ev.on{background:var(--cinnabar);color:#fff;border-color:var(--cinnabar);font-weight:600;}
+.m1-ev .tm{font-size:8.5px;opacity:.88;font-variant-numeric:tabular-nums;margin-left:1px;}
+.m1-timers{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;}
+.m1-timer{background:#1f1f1f;border:1px solid #555;border-radius:4px;padding:2px 5px;
+  display:flex;align-items:center;justify-content:space-between;}
+.m1-timer .k{font-size:8.5px;color:#9a9182;}
+.m1-timer .v{font-size:11px;font-weight:700;color:#ffd479;font-variant-numeric:tabular-nums;}
+
+.m1-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+.m1-fields label{font-size:8.5px;color:#a9a094;display:block;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.m1-fields .stepper{display:flex;align-items:center;gap:2px;}
+.m1-fields .stepper input{flex:1;width:100%;min-width:0;background:#1f1f1f;color:#e8e2d4;border:1px solid #555;
+  border-radius:4px;padding:1px;text-align:center;font-size:11px;font-weight:700;min-height:21px;}
+.m1-fields .stepper button{background:#444;color:#e8e2d4;border:1px solid #666;border-radius:4px;
+  width:19px;height:21px;font-size:12px;font-weight:700;cursor:pointer;flex:none;padding:0;line-height:1;}
+.m1-fields .stepper button:active{background:var(--gold);color:#2b2b2b;}
+.m1-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:4px;}
+.m1-acts button{border:1px solid #666;background:#444;color:#e8e2d4;border-radius:4px;padding:2px 3px;
+  font-size:9.5px;font-weight:600;cursor:pointer;min-height:22px;white-space:nowrap;line-height:1;}
+.m1-acts button.start{background:var(--green);border-color:var(--green);color:#fff;}
+.m1-acts button.drop{background:var(--cinnabar);border-color:var(--cinnabar);color:#fff;}
+.m1-acts button.save{background:var(--blue);border-color:var(--blue);color:#fff;}
+.m1-note{display:none;}
+
+.m1-trend{background:#2a2620;border:1px solid #6b5a38;border-radius:5px;padding:3px 5px;margin-bottom:4px;
+  display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:4px;}
+.m1-trend .td{background:#1f1f1f;border:1px solid #4a4131;border-radius:4px;padding:2px 4px;text-align:center;}
+.m1-trend .td.stage-td{background:#332c1f;border-color:var(--gold);}
+.m1-trend .td .tn{font-size:8.5px;color:#9a9182;line-height:1.1;}
+.m1-trend .td .tv{font-size:10.5px;font-weight:700;margin-top:1px;line-height:1.1;}
+.m1-trend .td .tv small{font-size:8px;font-weight:400;color:#9a9182;display:inline;margin-left:2px;}
+.m1-trend .td.up .tv{color:#ff9c6e;} .m1-trend .td.down .tv{color:#7fd1a8;}
+.m1-trend .td.hold .tv{color:#e8e2d4;}
+.m1-trend .td.up{border-color:#8a5238;} .m1-trend .td.down{border-color:#386a52;}
+
+.m1-live{margin-top:4px;background:#202020;border:1px solid #555;border-radius:5px;padding:4px 6px;}
+.m1-live .lt{font-size:9px;color:var(--gold);font-weight:600;margin-bottom:2px;
+  display:flex;justify-content:space-between;align-items:center;gap:4px;line-height:1.1;}
+.m1-live .lt .sm{font-size:8.5px;color:#a9a094;font-weight:400;}
+#m1LiveBody{overflow:hidden;}
+.m1-live .lrow{display:flex;gap:6px;align-items:center;font-size:12px;color:#fff7e6;
+  padding:4px 8px;margin-bottom:0;border-radius:5px;background:#2a2a2a;border-left:3px solid #666;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m1-live .lrow span:last-child{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m1-live .lrow .li{font-size:10px;padding:1px 5px;}
+.m1-live .lempty{font-size:11.5px;color:#b5ab99;text-align:center;padding:3px;line-height:1.3;}
+.m1-live .lrow:last-child{margin-bottom:0;}
+.m1-live .lrow.up{border-left-color:#ff9c6e;} .m1-live .lrow.down{border-left-color:#7fd1a8;}
+.m1-live .lrow.air{border-left-color:#6fb0e0;} .m1-live .lrow.stir{border-left-color:#8fd0d8;} .m1-live .lrow.ok{border-left-color:#ffd479;}
+.m1-live .lrow .li{flex:none;font-size:8px;padding:0 4px;border-radius:5px;background:#444;color:#e8e2d4;font-weight:700;}
+.m1-live .lrow.up .li{background:#ff9c6e;color:#2b2b2b;} .m1-live .lrow.down .li{background:#7fd1a8;color:#2b2b2b;}
+.m1-live .lrow.air .li{background:#6fb0e0;color:#2b2b2b;} .m1-live .lrow.stir .li{background:#8fd0d8;color:#2b2b2b;}
+.m1-live .lrow.ok .li{background:#ffd479;color:#2b2b2b;}
+.m1-live .lrow b{color:#ffd479;}
+.m1-live .lempty{font-size:9px;color:#9a9182;text-align:center;padding:2px;line-height:1.2;}
+.m1-knobsum{background:#242424;border:1px solid var(--gold);border-radius:4px;padding:2px 6px;margin-bottom:3px;
+  font-size:9px;color:#cfc7b8;display:flex;gap:6px;flex-wrap:wrap;align-items:center;line-height:1.15;}
+.m1-knobsum b{color:#ffd479;font-size:10px;} .m1-knobsum .kf b{color:#ff9c6e;} .m1-knobsum .ks b{color:#8fd0d8;}
+
+/* 保存的曲线记录列表 */
+.m1-hist{margin-top:4px;background:#1c1c1c;border:1px solid #555;border-radius:5px;padding:4px 6px;}
+.m1-hist .ht{font-size:9.5px;color:var(--gold);font-weight:600;margin-bottom:3px;
+  display:flex;justify-content:space-between;align-items:center;}
+.m1-hist .hlist{max-height:64px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+.m1-hist .hrow{display:flex;justify-content:space-between;align-items:center;gap:5px;
+  background:#262626;border:1px solid #3f3f3f;border-radius:4px;padding:2px 6px;font-size:9.5px;color:#dcd4c4;}
+.m1-hist .hrow .hinfo{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m1-hist .hrow .hinfo b{color:#ffd479;}
+.m1-hist .hrow .hbtns{display:flex;gap:3px;flex:none;}
+.m1-hist .hrow button{background:#3a3a3a;color:#e8e2d4;border:1px solid #5a5a5a;border-radius:3px;
+  padding:1px 6px;font-size:9px;cursor:pointer;line-height:1.2;}
+.m1-hist .hrow button:hover{border-color:var(--gold);color:var(--gold);}
+.m1-hist .hempty{font-size:9px;color:#8e8577;text-align:center;padding:2px;}
+
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.seg button{flex:1;border:none;background:#fff;color:var(--coffee);padding:8px 0;
+  font-size:13px;cursor:pointer;}
+.seg button+button{border-left:1px solid var(--line);}
+.seg button.on{background:var(--coffee);color:#fff;font-weight:600;}
+
+/* 图表容器确保明确尺寸，避免在移动端/横屏下高度为 0 导致空白 */
+.chart-box{position:relative;background:#fffdf7;border:1px solid var(--line);border-radius:10px;padding:6px;min-height:140px;}
+canvas#chart{display:block;width:100%;height:180px;}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px;font-size:11px;color:var(--muted);margin-top:7px;padding:0 2px;}
+@media(max-width:560px){.legend{grid-template-columns:repeat(2,1fr);}}
+.legend i{display:inline-block;width:13px;height:3px;vertical-align:middle;margin-right:4px;border-radius:2px;}
+.scrub{width:100%;height:24px;margin-top:8px;accent-color:var(--cinnabar);}
+.simrow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+.btn{background:var(--cinnabar);color:#fff;border:none;border-radius:8px;padding:8px 13px;
+  font-size:13px;font-weight:500;cursor:pointer;min-height:36px;display:inline-flex;align-items:center;justify-content:center;}
+.btn:active{opacity:.85;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn.ghost{background:#fff;color:var(--coffee);border:1px solid var(--line);}
+.btn.gold{background:var(--gold);color:#fff;}
+.btn.green{background:var(--green);color:#fff;}
+.btn.sm{padding:3px 8px;font-size:11px;min-height:24px;}
+.btn.big{padding:9px 14px;font-size:13.5px;font-weight:600;}
+
+.gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px;}
+@media(max-width:520px){.gauges{grid-template-columns:repeat(2,1fr);}}
+.gauge{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 9px;}
+.gauge .lbl{font-size:10.5px;color:var(--muted);}
+.gauge .val{font-size:19px;font-weight:700;color:var(--cinnabar);line-height:1.2;margin-top:2px;}
+.gauge .val small{font-size:10.5px;color:var(--muted);font-weight:400;}
+.bar{height:5px;background:#efe7d2;border-radius:3px;margin-top:5px;overflow:hidden;}
+.bar>i{display:block;height:100%;background:var(--cinnabar);border-radius:3px;transition:width .12s;}
+.stat{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 11px;margin-bottom:7px;}
+.stat .k{font-size:11px;color:var(--muted);}
+.stat .v{font-size:12.5px;color:var(--ink);margin-top:2px;font-weight:500;}
+.phase-now{background:var(--cinnabar);color:#fff;border-radius:10px;padding:10px 12px;margin-bottom:9px;}
+.phase-now .t{font-size:11px;opacity:.88;}
+.phase-now .p{font-size:16.5px;font-weight:700;margin:1px 0;}
+.phase-now .h{font-size:12px;opacity:.95;line-height:1.45;}
+
+table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;}
+th,td{border:1px solid var(--line);padding:6px 6px;text-align:center;}
+th{background:var(--coffee);color:#fff;font-weight:500;}
+td.k{background:#f3ead2;color:var(--coffee);font-weight:600;text-align:left;padding-left:8px;}
+td.hl{color:var(--cinnabar);font-weight:700;background:#fff8f7;}
+table.mini td,table.mini th{padding:6px 5px;font-size:11.5px;}
+
+.note{background:#f3ead2;border-left:4px solid var(--gold);padding:8px 11px;
+  font-size:12px;color:#4a3f2f;border-radius:0 8px 8px 0;margin:8px 0;line-height:1.5;}
+.hint{font-size:11.5px;color:var(--muted);}
+.warn{color:var(--cinnabar);font-weight:600;}
+.ok{color:var(--green);font-weight:600;}
+
+.diag-item{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 10px;margin-bottom:6px;}
+.diag-item .h{font-size:12px;font-weight:600;color:var(--coffee);}
+.diag-item .b{font-size:11.5px;color:#4a3f2f;margin-top:2px;line-height:1.45;}
+.score{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);
+  border-radius:8px;padding:9px 11px;margin-bottom:8px;}
+.score .num{font-size:28px;font-weight:700;color:var(--green);}
+.score .num.mid{color:var(--gold);} .score .num.bad{color:var(--cinnabar);}
+select,input[type=number],input[type=text]{padding:7px 10px;border:1px solid var(--line);
+  border-radius:8px;background:#fff;color:var(--ink);font-size:15px;}
+select.full,input.full{width:100%;}
+.advice{background:#fbf6e8;border:1px dashed var(--gold);border-radius:8px;padding:9px 11px;
+  font-size:12px;color:#4a3f2f;margin-top:7px;line-height:1.5;}
+.foot{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 18px;}
+
+.toast{position:fixed;bottom:calc(62px + var(--safe-b));left:50%;transform:translateX(-50%) translateY(60px);
+  background:rgba(43,43,43,.95);color:#fff;padding:9px 18px;border-radius:20px;font-size:12px;
+  opacity:0;transition:.25s;z-index:90;max-width:88vw;text-align:center;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+.survey-row{margin:11px 0;}
+.survey-row .q{font-size:13px;color:var(--coffee);font-weight:600;margin-bottom:6px;}
+.rate{display:flex;gap:6px;flex-wrap:wrap;}
+.rate button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 11px;
+  font-size:12.5px;color:var(--coffee);cursor:pointer;min-height:36px;}
+.rate button.on{background:var(--cinnabar);color:#fff;border-color:var(--cinnabar);font-weight:600;}
+.chk{display:flex;gap:6px;flex-wrap:wrap;}
+.chk label{border:1px solid var(--line);border-radius:16px;padding:6px 11px;font-size:12px;
+  color:var(--coffee);cursor:pointer;background:#fff;}
+.chk label.on{background:#fbe9e9;color:var(--cinnabar);border-color:var(--cinnabar);font-weight:600;}
+.survey-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+
+.calib-row{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 10px;margin-bottom:7px;
+  display:flex;justify-content:space-between;gap:8px;align-items:center;}
+.calib-row .nm{font-size:12.5px;font-weight:600;color:var(--coffee);}
+.calib-row .ds{font-size:11px;color:var(--muted);margin-top:2px;}
+.calib-empty{color:var(--muted);font-size:12px;text-align:center;padding:14px;}
+
+.dock{position:fixed;bottom:0;left:0;right:0;z-index:40;background:rgba(255,250,240,0.96);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);padding:3px calc(10px + var(--safe-r)) calc(3px + var(--safe-b)) calc(10px + var(--safe-l));
+  display:flex;justify-content:center;}
+.dock-inner{width:100%;max-width:960px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>智能咖啡烘焙控制台<span class="badge">LIVE</span><span class="badge learn">学习版</span></h1>
+    <div class="sub">狙击手 M1（Kaleido）≤200g · 交互面板 / 曲线 / 纠偏</div>
+  </div>
+  <div class="hdr-btns">
+    <span class="mode-sel"><b>模式</b>
+      <select id="roastMode" onchange="setRoastMode(this.value)">
+        <option value="light">浅烘</option>
+        <option value="medium" selected>中烘</option>
+        <option value="dark">深烘</option>
+      </select>
+    </span>
+    <button class="btn green sm" onclick="openSurvey()">📋 问卷</button>
+    <button class="btn ghost sm" onclick="copyParams()">复制</button>
+  </div>
+</header>
+
+<div class="wrap">
+<!-- 1 选豆 -->
+<div class="panel">
+  <h2><span class="n">1</span>选择豆种 · 产地 <span class="tagx" id="calibBadge" style="display:none"></span></h2>
+  <div class="filters">
+    <input id="search" placeholder="搜索国家 / 产区 / 品种 / 风味…" oninput="renderBeans()">
+    <div class="chip-row">
+      <button class="chip on" data-r="全部" onclick="setRegion(this.dataset.r)">全部</button>
+      <button class="chip" data-r="中美洲" onclick="setRegion(this.dataset.r)">中美洲</button>
+      <button class="chip" data-r="南美洲" onclick="setRegion(this.dataset.r)">南美洲</button>
+      <button class="chip" data-r="非洲" onclick="setRegion(this.dataset.r)">非洲</button>
+      <button class="chip" data-r="亚洲" onclick="setRegion(this.dataset.r)">亚洲</button>
+      <button class="chip" data-r="大洋洲" onclick="setRegion(this.dataset.r)">大洋洲</button>
+    </div>
+  </div>
+  <div class="bean-grid" id="beanGrid"></div>
+  <div class="hint" style="margin-top:8px">点击豆卡查看特性档案。共 <b id="beanCount">0</b> 款方案（<b id="countryCount">0</b> 国），<span class="ok">●</span> 已应用校准。</div>
+</div>
+
+<!-- 狙击手 M1 可交互设备面板 -->
+<div class="panel m1panel" id="m1Panel">
+  <div class="m1-head">
+    <div class="dev">狙击手 M1 · Kaleido <small>拖滑杆录实机值→实时纠偏+打点</small></div>
+    <div class="m1-mode">
+      <button class="on" id="m1modeManual" onclick="m1SetMode('manual')">手动</button>
+      <button id="m1modeAuto" onclick="m1SetMode('auto')">自动</button>
+    </div>
+  </div>
+
+  <div class="m1-reads">
+    <div class="m1-read"><div class="k">总计时</div><div class="v" id="m1Clock">00:00</div>
+      <input type="range" class="m1-slider tiny" id="slClock" min="0" max="100" value="0" step="1" oninput="m1OnClock(this.value)"></div>
+    <div class="m1-read heat" id="cardBt"><div class="k">豆温BT</div><div class="v" id="m1Bt">—<small>℃</small></div>
+      <input type="range" class="m1-slider" id="slBt" min="60" max="240" value="90" step="1" oninput="m1OnRead('bt',this.value)" onchange="m1OnRead('bt',this.value)" ondblclick="m1ClearRead('bt')"></div>
+    <div class="m1-read heat" id="cardEt"><div class="k">风温ENV</div><div class="v" id="m1Et">—<small>℃</small></div>
+      <input type="range" class="m1-slider" id="slEt" min="60" max="250" value="90" step="1" oninput="m1OnRead('et',this.value)" onchange="m1OnRead('et',this.value)" ondblclick="m1ClearRead('et')"></div>
+    <div class="m1-read dev" id="cardRor"><div class="k">ROR</div><div class="v" id="m1Ror">—<small>℃/m</small></div>
+      <input type="range" class="m1-slider" id="slRor" min="0" max="30" value="10" step="0.5" oninput="m1OnRead('ror',this.value)" onchange="m1OnRead('ror',this.value)" ondblclick="m1ClearRead('ror')"></div>
+    <div class="m1-read dev" id="cardDev"><div class="k">发展率</div><div class="v" id="m1Dev">0<small>%</small></div>
+      <input type="range" class="m1-slider" id="slDev" min="0" max="100" value="0" step="1" oninput="m1OnRead('dev',this.value)" onchange="m1OnRead('dev',this.value)" ondblclick="m1ClearRead('dev')"></div>
+    <div class="m1-read stir" id="cardStir"><div class="k">搅拌</div><div class="v" id="m1Stir">—<small>/100</small></div>
+      <input type="range" class="m1-slider" id="slStir" min="0" max="100" value="65" step="1" oninput="m1OnRead('stir',this.value)" onchange="m1OnRead('stir',this.value)" ondblclick="m1ClearRead('stir')"></div>
+    <div class="m1-read aim" id="cardTarget"><div class="k">目标豆温</div><div class="v" id="m1Target">—<small>℃</small></div>
+      <input type="range" class="m1-slider" id="slTarget" min="150" max="240" value="205" step="1" oninput="m1OnRead('target',this.value)" onchange="m1OnRead('target',this.value)" ondblclick="m1ClearRead('target')"></div>
+  </div>
+
+  <div class="m1-ctl">
+    <div class="m1-box">
+      <div class="t">事件标注 · EVENT MARKERS</div>
+      <div class="m1-events" id="m1Events"></div>
+      <div class="m1-timers">
+        <div class="m1-timer"><div class="k">一爆计时</div><div class="v" id="m1FcTimer">00:00</div></div>
+        <div class="m1-timer" id="m1ev_scTimerBox"><div class="k">二爆计时</div><div class="v" id="m1ScTimer">00:00</div></div>
+      </div>
+    </div>
+    <div class="m1-box">
+      <div class="t">火力 / 风门 / 目标 · 手动调节</div>
+      <div class="m1-fields">
+        <div><label>火力GAS</label><div class="stepper">
+          <button type="button" onclick="m1Step('fire',-2)">−</button><input type="number" id="m1Fire" value="100" min="0" max="100"><button type="button" onclick="m1Step('fire',2)">+</button></div></div>
+        <div><label>风门AIR</label><div class="stepper">
+          <button type="button" onclick="m1Step('air',-5)">−</button><input type="number" id="m1Air" value="30" min="0" max="100"><button type="button" onclick="m1Step('air',5)">+</button></div></div>
+        <div><label>目标℃</label><div class="stepper">
+          <button type="button" onclick="m1Step('target',-2)">−</button><input type="number" id="m1Tgt" value="205" min="80" max="250"><button type="button" onclick="m1Step('target',2)">+</button></div></div>
+        <div><label>暂停</label><div class="stepper">
+          <button type="button" style="width:100%;font-size:9.5px" onclick="m1Pause()">暂停火力</button></div></div>
+      </div>
+      <div class="m1-acts">
+        <button type="button" class="start" id="m1StartBtn" onclick="m1StartRoast()">▶ 放豆/开始</button>
+        <button type="button" class="drop" onclick="m1Drop()">下豆冷却</button>
+        <button type="button" class="save" onclick="m1Save()">保存曲线</button>
+        <button type="button" onclick="m1Reset()">↺ 复位</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 实时纠偏栏（紧贴控制区下方，调节滑杆时同屏立即可见） -->
+  <div class="m1-live" id="m1LiveBox">
+    <div class="lt"><span>🛠️ 实时纠偏 <small id="m1LiveCnt" style="color:#a9a094;font-weight:400"></small></span><span class="sm" id="m1LiveStage">待机 · 入豆后启用</span></div>
+    <div class="m1-trend" id="m1Trend" style="display:none"></div>
+    <div id="m1LiveBody"><div class="lempty">点「▶ 放豆/开始」或拖动上方读数滑杆录入实机值，此处立即显示精确修正指令。</div></div>
+  </div>
+
+  <!-- 已保存曲线记录列表与查看（位于实时纠偏栏下方） -->
+  <div class="m1-hist" id="m1HistBox">
+    <div class="ht">
+      <span>📁 已保存曲线记录（<span id="m1HistCnt">0</span>）<small id="m1LoadedBadge" style="display:none;color:#7fd1a8;margin-left:4px"></small></span>
+      <span style="display:flex;gap:4px;align-items:center">
+        <button type="button" id="m1UnloadBtn" style="display:none;min-height:18px;padding:0 6px;font-size:8.5px;background:var(--cinnabar);color:#fff;border:1px solid var(--cinnabar);border-radius:3px;cursor:pointer;font-weight:600" onclick="m1UnloadCurve()">✕ 取消加载</button>
+        <button type="button" style="min-height:18px;padding:0 6px;font-size:8.5px;background:#333;color:#ddd;border:1px solid #666;border-radius:3px;cursor:pointer" onclick="m1ClearHist()">清空</button>
+      </span>
+    </div>
+    <div class="hlist" id="m1HistList"><div class="hempty">暂无保存的曲线记录，点「保存曲线」即可存入本地。</div></div>
+  </div>
+</div>
+
+<!-- 2 烘焙控制台 -->
+<div class="panel" id="consolePanel">
+  <h2><span class="n">2</span>烘焙控制台 <span class="tagx">模拟烘焙</span></h2>
+  <div class="seg">
+    <button type="button" data-g="50" onclick="setSize(50)">50g</button>
+    <button type="button" data-g="100" onclick="setSize(100)">100g</button>
+    <button type="button" data-g="200" class="on" onclick="setSize(200)">200g 满载</button>
+  </div>
+  <div class="phase-now" id="phaseNow">
+    <div class="t">当前阶段 · <span id="clock">00:00</span></div>
+    <div class="p" id="phaseName">待机</div>
+    <div class="h" id="phaseHint">选豆后点「▶ 放豆/开始」按真实时间烘焙，拖动读数滑杆即可实时录入实机数据并获得设备纠偏指令；也可拖动时间轴快速定位。</div>
+  </div>
+  <div class="gauges">
+    <div class="gauge"><div class="lbl">火力值 GAS</div><div class="val" id="gFire">—<small> /100</small></div><div class="bar"><i id="bFire"></i></div></div>
+    <div class="gauge"><div class="lbl">风力值 AIR</div><div class="val" id="gAir">—<small> /100</small></div><div class="bar"><i id="bAir"></i></div></div>
+    <div class="gauge"><div class="lbl">豆温 BT</div><div class="val" id="gTemp">—<small> ℃</small></div><div class="bar"><i id="bTemp"></i></div></div>
+    <div class="gauge"><div class="lbl">风温 ENV</div><div class="val" id="gEnv">—<small> ℃</small></div><div class="bar"><i id="bEnv"></i></div></div>
+    <div class="gauge"><div class="lbl">升温率 ROR</div><div class="val" id="gRor">—<small> ℃/min</small></div><div class="bar"><i id="bRor"></i></div></div>
+    <div class="gauge"><div class="lbl">发展率 DEV%</div><div class="val" id="gDev">—<small> %</small></div><div class="bar"><i id="bDev"></i></div></div>
+  </div>
+  <div class="stat"><div class="k">智能提示 · 当前操作要点</div><div class="v" id="liveTip">—</div></div>
+  <div class="simrow">
+    <button type="button" class="btn" style="flex:1" id="simBtn" onclick="toggleSim()">▶ 模拟烘焙</button>
+    <button type="button" class="btn ghost" onclick="resetSim()">↺ 复位</button>
+  </div>
+  <input type="range" class="scrub" id="scrub" min="0" max="100" value="0" oninput="onScrub(this.value)">
+</div>
+
+<!-- 3 曲线图 -->
+<div class="panel" id="curvePanel">
+  <h2><span class="n">3</span>豆温 / ROR 曲线 · 阶段全景</h2>
+  <div class="chart-box" id="chartWrap"><canvas id="chart" width="760" height="320"></canvas></div>
+  <div class="legend">
+    <span><i style="background:#6b4a2f"></i>目标豆温 BT</span>
+    <span><i style="background:#3a8a9a"></i>目标风温 ENV</span>
+    <span><i style="background:#a61b1b"></i>目标 ROR</span>
+    <span><i style="background:#c0392b"></i>● 实机录入豆温</span>
+    <span><i style="background:#1f8a99"></i>● 实机录入风温</span>
+    <span><i style="background:#7a3b8a"></i>● 实机录入 ROR</span>
+  </div>
+  <div class="note" id="curveNote">细线为目标配方，<b>带白边圆点是 M1 面板录入的实机读数</b>。双击读数滑杆可恢复跟随目标曲线。</div>
+</div>
+
+<!-- 4 预热与曲线诊断 -->
+<div class="panel">
+  <h2><span class="n">4</span>智能预热与曲线诊断</h2>
+  <div class="stat">
+    <div class="k">推荐入豆温度（环境温度）</div>
+    <div class="v" id="preheatVal" style="font-size:20px;color:var(--cinnabar);font-weight:700">—</div>
+    <div class="hint" id="preheatSub">—</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <input type="number" id="curTemp" placeholder="输入当前机温 ℃" style="flex:1">
+    <button type="button" class="btn ghost" onclick="checkPreheat()">检测机温</button>
+  </div>
+  <div id="preheatResult" class="advice" style="display:none"></div>
+  <div class="score" id="scoreBox"><div class="num" id="scoreNum">—</div><div><div style="font-size:13.5px;font-weight:600">曲线健康评分</div><div class="hint" id="scoreTxt">基于 DTR / 发展时间 / ROR 落点</div></div></div>
+  <div id="diagList"></div>
+</div>
+
+<!-- 5 三档参数 -->
+<div class="panel">
+  <h2><span class="n">5</span>三档烘焙参数 · 50g / 100g / 200g <span class="tagx">跟随校准联动</span></h2>
+  <div id="paramTitle" class="hint" style="margin-bottom:8px">—</div>
+  <div style="overflow-x:auto"><table id="paramTable"></table></div>
+  <div class="note"><b>缩放逻辑：</b>投豆量减半时火力值仅降约 15–18%（50g 累计降约 34%），入豆温度递减（100g 约 −12℃，50g 约 −22℃）。烘后校准写入 200g 基准后，三档参数自动同步重算。</div>
+</div>
+
+<!-- 6 关键节点操作表 -->
+<div class="panel">
+  <h2><span class="n">6</span>关键节点操作表</h2>
+  <div style="overflow-x:auto"><table class="mini" id="nodeTable"></table></div>
+</div>
+
+<!-- 7 智能缺陷诊断 -->
+<div class="panel">
+  <h2><span class="n">7</span>智能缺陷诊断与对策</h2>
+  <select id="defect" class="full" onchange="showDefect()">
+    <option value="">— 选择成品风味问题 —</option>
+    <option value="bitter">苦涩 / 焦味 / 豆面出油</option>
+    <option value="sour">尖酸 / 青涩 / 咸味</option>
+    <option value="flat">风味平淡 / 甜感不足</option>
+    <option value="smoky">烟熏味 / 闷味</option>
+    <option value="uneven">发展不匀 / 花豆</option>
+    <option value="ror">ROR 曲线异常（Flick / Crash）</option>
+  </select>
+  <div class="advice" id="defectBox">选择上方问题，系统给出原因与调整建议。</div>
+  <div class="hint" style="margin-top:8px">调整原则：<b>一次只改一个变量</b>，连续记录 3–5 锅再评估。</div>
+</div>
+
+<!-- 8 我的烘焙校准 -->
+<div class="panel">
+  <h2><span class="n">8</span>我的烘焙校准 <span class="tagx">自动保存</span></h2>
+  <div id="calibList"><div class="calib-empty">尚无校准记录。烘焙完成后点「烘后问卷」提交，校准会保存在此，下次选同种豆自动调用。</div></div>
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="btn green sm" onclick="openSurvey()">📋 烘后问卷 · 自学习</button>
+    <button type="button" class="btn ghost sm" onclick="clearAllCalib()">清空全部校准</button>
+  </div>
+</div>
+
+<div class="foot">智能咖啡烘焙控制台 · 起始配方仅供学习参考 · 校准数据保存在本机</div>
+</div>
+
+<div class="dock">
+  <div class="dock-inner">
+    <button type="button" class="btn ghost sm" onclick="document.getElementById('m1Panel').scrollIntoView({behavior:'smooth'})">🎛️ M1面板</button>
+    <button type="button" class="btn ghost sm" onclick="document.getElementById('curvePanel').scrollIntoView({behavior:'smooth'})">📊 曲线</button>
+    <button type="button" class="btn sm" onclick="toggleSim();document.getElementById('curvePanel').scrollIntoView({behavior:'smooth'})">▶ 模拟</button>
+    <button type="button" class="btn green sm" onclick="openSurvey()">📋 问卷</button>
+  </div>
+</div>
+
+<div class="modal-mask" id="mask"><div class="modal"><div id="modalBody"></div></div></div>
+<div class="modal-mask" id="surveyMask"><div class="modal"><div id="surveyBody"></div></div></div>
+<div class="modal-mask" id="calibMask"><div class="modal"><div id="calibModalBody"></div></div></div>
+<div class="modal-mask" id="curveHistMask"><div class="modal"><div id="curveHistBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TPL={
+ "浅":   {ag:72,charge:198,turn:[50,90],yellow:[220,148],fc:[420,195],drop:[495,201],
+          power:[[0,94],[50,86],[140,69],[220,53],[320,38],[420,26],[495,15]],air:[[0,30],[50,30],[220,60],[420,90],[495,100]]},
+ "浅中": {ag:67,charge:200,turn:[55,92],yellow:[240,150],fc:[465,196],drop:[555,205],
+          power:[[0,95],[55,88],[150,72],[240,55],[350,40],[465,28],[555,16]],air:[[0,20],[55,30],[240,50],[465,80],[555,100]]},
+ "中":   {ag:60,charge:205,turn:[60,95],yellow:[255,152],fc:[485,198],drop:[580,210],
+          power:[[0,97],[60,90],[160,75],[255,60],[370,45],[485,32],[580,19]],air:[[0,20],[60,30],[255,50],[485,70],[580,90]]},
+ "中深": {ag:50,charge:210,turn:[65,98],yellow:[270,155],fc:[510,200],drop:[640,219],
+          power:[[0,100],[65,92],[170,80],[270,65],[390,52],[510,38],[590,28],[640,14]],air:[[0,20],[65,30],[270,50],[510,70],[640,90]]},
+ "深":   {ag:45,charge:215,turn:[70,100],yellow:[285,157],fc:[530,202],drop:[665,223],
+          power:[[0,100],[70,93],[185,82],[285,67],[410,54],[530,40],[600,30],[665,14]],air:[[0,20],[70,30],[285,50],[530,70],[665,90]]}
+};
+function mkBase(level,density,process,ag){
+  let key=(level||"中").replace("焙","");
+  if(key==="中浅")key="浅中";
+  const t=JSON.parse(JSON.stringify(TPL[key]||TPL["中"]));
+  if(ag)t.ag=ag;
+  t.charge += density==="很高"?2:density==="高"?1:density==="中高"?0:density==="中"?-1:-2;
+  const airAdj=(process==="日晒"||process==="湿刨"||process==="蜜处理"||process==="半水洗")?10:0;
+  if(airAdj)t.air=t.air.map(([x,y])=>[x,Math.min(100,y+airAdj)]);
+  return t;
+}
+function mk(o){
+  return Object.assign({region:"中美洲"},o,
+    {base:o.base||mkBase(o.level,o.density,o.process,o.ag)});
+}
+const BEANS=[
+mk({id:"geisha-panama-w",name:"翡翠庄园 瑰夏（水洗）",en:"ESMERALDA GEISHA WASHED",
+ region:"中美洲",country:"巴拿马 · 波奎特",variety:"瑰夏 Gesha",process:"水洗",alt:"1400–1700m",density:"高",level:"浅中焙",ag:67,fc:[465,196],
+ feats:["茉莉花香","佛手柑","白桃","蜂蜜","茶感明亮"],flavor:"花香 · 柑橘 · 白色水果 · 甜感绵长",
+ intro:"2004 年 BOP 一鸣惊人，被公认为咖啡界的王者。波奎特高海拔冷凉气候配合火山土，造就标志性茉莉与柑橘调。",
+ advice:"浅中焙，慢脱水、短发展。目标 Agtron 豆 65–70，发展 1:15–1:30，DTR 18–21%。切忌进二爆。",
+ base:{charge:200,turn:[55,92],yellow:[240,150],fc:[465,196],drop:[555,205],power:[[0,95],[55,88],[150,72],[240,55],[350,40],[465,28],[555,16]],air:[[0,20],[55,30],[240,50],[465,80],[555,100]]}}),
+mk({id:"geisha-panama-n",name:"翡翠庄园 瑰夏（日晒）",en:"ESMERALDA GEISHA NATURAL",
+ region:"中美洲",country:"巴拿马 · 波奎特",variety:"瑰夏 Gesha",process:"日晒",alt:"1400–1700m",density:"高",level:"浅中焙",ag:65,
+ feats:["熟成莓果","红酒","可可","发酵甜香","body 圆润"],flavor:"莓果 · 酒香 · 黑巧 · 甜感浓烈",
+ intro:"日晒让果肉糖分渗入豆内，相比水洗更甜更奔放，酒香与莓果调突出，是 BOP 竞标常胜军。",
+ advice:"浅中焙但比水洗略深一点点带出酒香。发展 1:20–1:35，风力稍开防闷。",
+ base:{charge:200,turn:[55,93],yellow:[240,150],fc:[460,196],drop:[558,207],power:[[0,95],[55,88],[150,72],[240,56],[350,42],[460,29],[558,17]],air:[[0,30],[55,30],[240,60],[460,80],[558,100]]}}),
+mk({id:"pa-bocas",name:"波奎特 卡杜艾（水洗）",en:"BOQUETE CATUAI WASHED",
+ region:"中美洲",country:"巴拿马 · 波奎特",variety:"卡杜艾 Catuai",process:"水洗",alt:"1400–1600m",density:"中高",level:"中焙",ag:61,
+ feats:["柑橘","焦糖","坚果","干净","明亮"],flavor:"柑橘 · 焦糖 · 坚果 · 干净",
+ intro:"巴拿马非瑰夏的高海拔水洗豆，品质稳定、价格亲和，是认识巴拿马风土的性价比之选。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。中度发展带出焦糖与柑橘。"}),
+mk({id:"cri-tarrazu",name:"塔拉珠（蜜处理）",en:"TARRAZU HONEY",
+ region:"中美洲",country:"哥斯达黎加 · 塔拉珠",variety:"卡杜拉 Caturra",process:"蜜处理",alt:"1400–1800m",density:"中高",level:"中浅焙",ag:63,
+ feats:["蜂蜜","核果","红糖","柑橘","圆润"],flavor:"蜂蜜 · 核果 · 红糖 · 圆润",
+ intro:"蜜处理保留部分果胶干燥，甜感介于水洗与日晒之间，塔拉珠是高海拔优质蜜处理代表。",
+ advice:"中浅焙，Agtron 豆 61–66，发展 1:30–1:45。别焙太深掩盖果胶甜。",
+ base:{charge:202,turn:[58,93],yellow:[245,150],fc:[470,196],drop:[555,206],power:[[0,96],[58,89],[155,73],[245,57],[355,43],[470,30],[555,17]],air:[[0,20],[58,30],[245,50],[470,80],[555,100]]}}),
+mk({id:"cri-central",name:"中央谷地（水洗）",en:"CENTRAL VALLEY WASHED",
+ region:"中美洲",country:"哥斯达黎加 · 中央谷地",variety:"卡杜拉 / 卡蒂摩",process:"水洗",alt:"1200–1500m",density:"中",level:"中焙",ag:60,
+ feats:["红糖","柑橘","坚果","干净","均衡"],flavor:"红糖 · 柑橘 · 坚果 · 均衡",
+ intro:"哥斯达黎加传统产区，水洗豆干净温和、甜感稳定，是中美日常精品的主力。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。稳火收尾带出红糖甜。"}),
+mk({id:"gua-antigua",name:"安提瓜（水洗）",en:"ANTIGUA WASHED",
+ region:"中美洲",country:"危地马拉 · 安提瓜",variety:"波旁 / 卡杜拉",process:"水洗",alt:"1500–1700m",density:"高",level:"中焙",ag:58,
+ feats:["巧克力","烟熏","香料","柑橘","body 厚"],flavor:"巧克力 · 香料 · 烟熏 · 均衡",
+ intro:"火山灰土壤与三面环谷微气候造就安提瓜独特的烟熏与巧克力调，是中美经典产区。",
+ advice:"中焙，Agtron 豆 56–61，发展 1:45–2:00。过浅则烟熏调出不来。",
+ base:{charge:205,turn:[60,94],yellow:[250,151],fc:[480,197],drop:[575,209],power:[[0,97],[60,90],[158,74],[250,59],[365,44],[480,31],[575,18]],air:[[0,20],[60,30],[250,50],[480,70],[575,90]]}}),
+mk({id:"gua-huehuetenango",name:"薇薇特南果（水洗）",en:"HUEHUETENANGO WASHED",
+ region:"中美洲",country:"危地马拉 · 薇薇特南果",variety:"波旁 / 卡杜拉",process:"水洗",alt:"1600–1900m",density:"高",level:"中浅焙",ag:62,
+ feats:["花香","柑橘","焦糖","巧克力","明亮"],flavor:"花香 · 柑橘 · 焦糖 · 明亮",
+ intro:"危地马拉最高海拔产区之一，干热风带来高酸与花香，是中美水洗豆的优质代表。",
+ advice:"中浅焙，Agtron 豆 60–65，发展 1:30–1:50，保留明亮酸质。"}),
+mk({id:"hon-copan",name:"科潘（水洗）",en:"COPAN WASHED",
+ region:"中美洲",country:"洪都拉斯 · 科潘",variety:"卡杜艾 Catuai",process:"水洗",alt:"1400–1600m",density:"中",level:"中焙",ag:60,
+ feats:["焦糖","坚果","苹果","可可","亲和"],flavor:"焦糖 · 坚果 · 苹果 · 温和",
+ intro:"洪都拉斯是中美洲最大产国，科潘高海拔水洗豆干净温和，常作入门精品与拼配。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。中度发展带出焦糖甜与坚果。",
+ base:{charge:204,turn:[60,94],yellow:[252,151],fc:[480,198],drop:[572,209],power:[[0,97],[60,90],[160,75],[252,60],[368,45],[480,32],[572,18]],air:[[0,20],[60,30],[252,50],[480,70],[572,90]]}}),
+mk({id:"slv-apaneca",name:"阿帕内卡-伊拉马特佩克（水洗）",en:"APANECA-ILAMATEPEC WASHED",
+ region:"中美洲",country:"萨尔瓦多 · 阿帕内卡",variety:"波旁 Bourbon",process:"水洗",alt:"1500–1700m",density:"中高",level:"中焙",ag:60,
+ feats:["红糖","杏仁","柑橘","焦糖","柔和"],flavor:"红糖 · 杏仁 · 柑橘 · 柔和",
+ intro:"萨尔瓦多火山产区，波旁水洗带温柔的红糖与坚果甜，是中美被低估的产区。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。温柔甜感忌焙过苦。"}),
+mk({id:"nic-jinotega",name:"希诺特加（水洗）",en:"JINOTEGA WASHED",
+ region:"中美洲",country:"尼加拉瓜 · 希诺特加",variety:"卡杜拉 Caturra",process:"水洗",alt:"1400–1700m",density:"中高",level:"中焙",ag:60,
+ feats:["巧克力","坚果","红果","焦糖","干净"],flavor:"巧克力 · 坚果 · 红果 · 干净",
+ intro:"尼加拉瓜北部高海拔产区，水洗豆干净带巧克力与红果甜，平衡度高。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
+mk({id:"mex-chiapas",name:"恰帕斯（水洗）",en:"CHIAPAS WASHED",
+ region:"中美洲",country:"墨西哥 · 恰帕斯",variety:"卡蒂摩 / 波旁",process:"水洗",alt:"1400–1600m",density:"中",level:"中焙",ag:61,
+ feats:["坚果","牛奶巧克力","柑橘","温和","干净"],flavor:"坚果 · 牛奶巧克力 · 柑橘 · 温和",
+ intro:"墨西哥南部主产区，水洗豆温和干净、巧克力坚果调突出，是拉美口粮精品的稳定来源。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。稳火即可带出坚果甜。"}),
+mk({id:"col-huila",name:"慧兰（水洗）",en:"HUILA WASHED",
+ region:"南美洲",country:"哥伦比亚 · 慧兰",variety:"卡斯蒂略 Castillo",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:60,
+ feats:["焦糖","坚果","红苹果","可可","均衡"],flavor:"焦糖 · 坚果 · 红色水果 · 均衡",
+ intro:"哥伦比亚最大精品产区，水洗豆干净均衡，是日常口粮与意式拼配的稳定选择。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00，DTR 19–22%。梅拉德段别太急。",
+ base:{charge:205,turn:[60,95],yellow:[255,152],fc:[485,198],drop:[580,210],power:[[0,97],[60,90],[160,75],[255,60],[370,45],[485,32],[580,19]],air:[[0,20],[60,30],[255,50],[485,70],[580,90]]}}),
+mk({id:"col-geisha",name:"慧兰 瑰夏（水洗）",en:"HUILA GEISHA WASHED",
+ region:"南美洲",country:"哥伦比亚 · 慧兰",variety:"瑰夏 Gesha",process:"水洗",alt:"1600–1900m",density:"高",level:"浅中焙",ag:66,
+ feats:["花香","柑橘","蜂蜜","白色水果","干净"],flavor:"花香 · 柑橘 · 蜂蜜 · 优雅",
+ intro:"哥伦比亚高海拔瑰夏，酸质比巴拿马柔和，花香突出，性价比优于巴拿马同品种。",
+ advice:"浅中焙，Agtron 豆 63–68，发展 1:25–1:40。保留花香需浅。",
+ base:{charge:202,turn:[57,93],yellow:[245,151],fc:[470,197],drop:[565,206],power:[[0,96],[57,89],[155,73],[245,57],[355,42],[470,29],[565,17]],air:[[0,20],[57,30],[245,50],[470,80],[565,100]]}}),
+mk({id:"col-cauca",name:"考卡（水洗）",en:"CAUCA WASHED",
+ region:"南美洲",country:"哥伦比亚 · 考卡",variety:"卡斯蒂略 / 波旁",process:"水洗",alt:"1700–2000m",density:"高",level:"浅中焙",ag:64,
+ feats:["花香","柑橘","红糖","果汁感","干净"],flavor:"花香 · 柑橘 · 红糖 · 果汁感",
+ intro:"考卡高海拔、火山土，出产的咖啡酸质明亮、果汁感强，是哥伦比亚精品的新星产区。",
+ advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:45，保留果汁与花香。"}),
+mk({id:"bra-cerrado-n",name:"喜拉多（日晒）",en:"CERRADO NATURAL",
+ region:"南美洲",country:"巴西 · 喜拉多",variety:"黄波旁 Yellow Bourbon",process:"日晒",alt:"1000–1200m",density:"中",level:"中深焙",ag:50,
+ feats:["榛果","牛奶巧克力","焦糖","低酸","醇厚"],flavor:"坚果 · 巧克力 · 焦糖 · 低酸醇厚",
+ intro:"巴西最大产区，日晒波旁甜感高、body 厚，低酸特性使其常被用作意式基底。",
+ advice:"中深焙，Agtron 豆 48–54，可进二爆初期。发展 2:00–2:20，DTR 22–24%。低密度豆入豆温度别太高防焦斑。",
+ base:{charge:210,turn:[65,98],yellow:[270,155],fc:[510,200],drop:[640,219],power:[[0,100],[65,92],[170,80],[270,65],[390,52],[510,38],[590,28],[640,14]],air:[[0,20],[65,30],[270,50],[510,70],[640,90]]}}),
+mk({id:"bra-cerrado-w",name:"喜拉多（半水洗）",en:"CERRADO PULPED NATURAL",
+ region:"南美洲",country:"巴西 · 喜拉多",variety:"黄波旁",process:"半水洗",alt:"1000–1200m",density:"中",level:"中焙",ag:55,
+ feats:["坚果","红糖","柑橘","干净","甜感"],flavor:"坚果 · 红糖 · 柔和果酸",
+ intro:"去果肉日晒保留部分果胶甜感，又比全日晒干净，是巴西精品化的代表。",
+ advice:"中焙，Agtron 豆 53–58，发展 1:50–2:10。",
+ base:{charge:208,turn:[63,97],yellow:[262,154],fc:[500,199],drop:[615,214],power:[[0,99],[63,91],[165,78],[262,63],[380,50],[500,36],[615,16]],air:[[0,20],[63,30],[262,50],[500,70],[615,90]]}}),
+mk({id:"bra-mantiqueira",name:"曼蒂凯拉（水洗）",en:"MANTIQUEIRA WASHED",
+ region:"南美洲",country:"巴西 · 曼蒂凯拉",variety:"黄波旁 / 卡杜艾",process:"水洗",alt:"1200–1400m",density:"中",level:"中焙",ag:57,
+ feats:["坚果","焦糖","柑橘","干净","均衡"],flavor:"坚果 · 焦糖 · 柑橘 · 均衡",
+ intro:"巴西东南高海拔产区，水洗豆比喜拉多更干净明亮，展现巴西精品的另一面。",
+ advice:"中焙，Agtron 豆 55–60，发展 1:50–2:10。"}),
+mk({id:"per-cajamarca",name:"卡哈马卡（水洗）",en:"CAJAMARCA WASHED",
+ region:"南美洲",country:"秘鲁 · 卡哈马卡",variety:"卡斯蒂略 / 波旁",process:"水洗",alt:"1600–1900m",density:"中高",level:"中焙",ag:62,
+ feats:["焦糖","坚果","红果","干净","柔和"],flavor:"焦糖 · 坚果 · 红果 · 干净",
+ intro:"秘鲁北部高海拔产区，有机种植普遍，水洗豆干净柔和、甜感稳定。",
+ advice:"中焙，Agtron 豆 59–64，发展 1:40–2:00。"}),
+mk({id:"bol-yungas",name:"雅库伊（水洗）",en:"YUNGAS WASHED",
+ region:"南美洲",country:"玻利维亚 · 雅库伊",variety:"波旁 Bourbon",process:"水洗",alt:"1600–1900m",density:"高",level:"浅中焙",ag:64,
+ feats:["花香","柑橘","红糖","茶感","干净"],flavor:"花香 · 柑橘 · 红糖 · 茶感",
+ intro:"玻利维亚高海拔有机波旁，风味细腻干净、甜感优雅，是南美小众精品的惊喜。",
+ advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:45，保留细腻花香。"}),
+mk({id:"ecu-andes",name:"安第斯（水洗）",en:"ECUADOR ANDES WASHED",
+ region:"南美洲",country:"厄瓜多尔 · 安第斯",variety:"卡杜拉 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:61,
+ feats:["坚果","焦糖","柑橘","巧克力","干净"],flavor:"坚果 · 焦糖 · 柑橘 · 干净",
+ intro:"厄瓜多尔安第斯山麓咖啡产量不大，但高海拔水洗豆干净带坚果焦糖甜，接近哥伦比亚风格。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
+mk({id:"eth-kochere",name:"耶加雪菲 科契尔（水洗）",en:"YIRGACHEFFE KOCHERE WASHED",
+ region:"非洲",country:"埃塞 · 耶加雪菲",variety:"原生种 Heirloom",process:"水洗",alt:"1900–2100m",density:"很高",level:"浅焙",ag:72,fc:[420,195],
+ feats:["柠檬","茉莉","伯爵茶","柑橘","干净明亮"],flavor:"柠檬 · 花香 · 柑橘 · 茶感",
+ intro:"埃塞高海拔水洗标杆，海拔越高豆子越硬、酸质越明亮。花香与柑橘是它的名片。",
+ advice:"极浅焙，Agtron 豆 70–75，发展 1:05–1:20，DTR 14–18%。高密度需高入豆温度、前段火力足，发展要短。",
+ base:{charge:198,turn:[50,90],yellow:[220,148],fc:[420,195],drop:[495,201],power:[[0,94],[50,86],[140,69],[220,53],[320,38],[420,26],[495,15]],air:[[0,30],[50,30],[220,60],[420,90],[495,100]]}}),
+mk({id:"eth-guji",name:"古吉 罕贝拉（日晒）",en:"GUJI HAMBELA NATURAL",
+ region:"非洲",country:"埃塞 · 古吉",variety:"原生种 Heirloom",process:"日晒",alt:"1900–2100m",density:"很高",level:"浅焙",ag:70,
+ feats:["草莓","蓝莓","酒香","花香","甜感爆炸"],flavor:"莓果 · 热带水果 · 酒香 · 高甜",
+ intro:"近年竞赛豆热门产区，日晒带来浓烈的莓果与发酵甜香，风味爆炸力强。",
+ advice:"浅焙，Agtron 豆 68–73。日晒发酵味重，风力全程偏开（60–100），发展 1:05–1:20，避免闷出醋酸。",
+ base:{charge:195,turn:[48,89],yellow:[215,147],fc:[410,194],drop:[482,200],power:[[0,93],[48,85],[135,68],[215,52],[310,38],[410,25],[482,15]],air:[[0,30],[48,40],[215,60],[410,90],[482,100]]}}),
+mk({id:"eth-sidama",name:"西达摩（水洗）",en:"SIDAMA WASHED",
+ region:"非洲",country:"埃塞 · 西达摩",variety:"原生种 Heirloom",process:"水洗",alt:"1800–2000m",density:"高",level:"浅焙",ag:71,
+ feats:["花香","柑橘","莓果","茶感","明亮"],flavor:"花香 · 柑橘 · 莓果 · 茶感",
+ intro:"埃塞最早的商业咖啡产区，水洗豆花香明亮、酸质活泼，是耶加之外的经典选择。",
+ advice:"浅焙，Agtron 豆 69–74，发展 1:05–1:25，前段火力足、发展短。"}),
+mk({id:"eth-limmu",name:"利姆（日晒）",en:"LIMU NATURAL",
+ region:"非洲",country:"埃塞 · 利姆",variety:"原生种 Heirloom",process:"日晒",alt:"1700–1900m",density:"高",level:"浅中焙",ag:68,
+ feats:["莓果","巧克力","花香","甜感","圆润"],flavor:"莓果 · 巧克力 · 花香 · 甜感",
+ intro:"利姆日晒豆比古吉温和，莓果与巧克力 balanced，甜感圆润，是入门埃塞日晒的好选择。",
+ advice:"浅中焙，Agtron 豆 66–71，发展 1:10–1:30，风力偏开防发酵。"}),
+mk({id:"ken-neri",name:"涅里（水洗）SL28",en:"NYERI SL28 WASHED",
+ region:"非洲",country:"肯尼亚 · 涅里",variety:"SL28 / SL34",process:"水洗",alt:"1700–1900m",density:"很高",level:"浅中焙",ag:63,
+ feats:["黑加仑","葡萄柚","乌梅","高酸","果汁感"],flavor:"黑加仑 · 葡萄柚 · 乌梅 · 强酸",
+ intro:"肯尼亚 SL28 以强烈的黑加仑酸与果汁感著称，是高酸的标杆。",
+ advice:"浅中焙，Agtron 豆 61–66。高酸豆别焙太浅否则尖酸，发展 1:25–1:40 让酸质圆润又不失明亮。",
+ base:{charge:200,turn:[55,92],yellow:[235,149],fc:[450,195],drop:[530,204],power:[[0,95],[55,88],[145,71],[235,55],[335,41],[450,29],[530,17]],air:[[0,30],[55,30],[235,50],[450,80],[530,90]]}}),
+mk({id:"ken-kirinyaga",name:"基里尼亚加 AA（水洗）",en:"KIRINYAGA AA WASHED",
+ region:"非洲",country:"肯尼亚 · 基里尼亚加",variety:"SL28 / SL34 / Ruiru11",process:"水洗",alt:"1700–1900m",density:"很高",level:"浅中焙",ag:64,
+ feats:["黑加仑","番茄","柑橘","高酸","果汁感"],flavor:"黑加仑 · 番茄 · 柑橘 · 强酸",
+ intro:"肯尼亚精品核心产区，AA 大粒水洗以浓烈黑加仑与番茄酸闻名，果汁感极强。",
+ advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:40，酸质要圆润不尖。"}),
+mk({id:"tan-kilimanjaro",name:"乞力马扎罗（水洗）",en:"KILIMANJARO WASHED",
+ region:"非洲",country:"坦桑尼亚 · 乞力马扎罗",variety:"铁皮卡 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:62,
+ feats:["柑橘","红糖","坚果","明亮","干净"],flavor:"柑橘 · 红糖 · 坚果 · 明亮",
+ intro:"坦桑尼亚高海拔产区，水洗豆酸质明亮、甜感干净，风格介于肯尼亚与哥伦比亚之间。",
+ advice:"中焙，Agtron 豆 59–64，发展 1:40–2:00。"}),
+mk({id:"ugi-elgon",name:"埃尔贡山（水洗）",en:"MT ELGON WASHED",
+ region:"非洲",country:"乌干达 · 埃尔贡山",variety:"波旁 / 铁皮卡",process:"水洗",alt:"1700–2000m",density:"高",level:"浅中焙",ag:64,
+ feats:["柑橘","莓果","红糖","花香","干净"],flavor:"柑橘 · 莓果 · 红糖 · 花香",
+ intro:"乌干达东部高海拔精品产区，水洗豆干净带柑橘与莓果甜，是东非新兴精品力量。",
+ advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:45。"}),
+mk({id:"rwanda",name:"卢旺达（水洗）",en:"RWANDA WASHED",
+ region:"非洲",country:"卢旺达 · 胡耶",variety:"波旁 Bourbon",process:"水洗",alt:"1700–2000m",density:"高",level:"浅中焙",ag:65,
+ feats:["花香","红茶","柑橘","红糖","干净"],flavor:"花香 · 红茶 · 柑橘 · 红糖",
+ intro:"卢旺达高海拔波旁水洗，风味干净细腻、花香与红茶调突出，是非洲精品的后起之秀。",
+ advice:"浅中焙，Agtron 豆 63–68，发展 1:25–1:45，保留花香与干净度。"}),
+mk({id:"burundi",name:"布隆迪（水洗）",en:"BURUNDI WASHED",
+ region:"非洲",country:"布隆迪 · 卡扬扎",variety:"波旁 Bourbon",process:"水洗",alt:"1700–1900m",density:"高",level:"浅中焙",ag:65,
+ feats:["花香","柑橘","莓果","红茶","明亮"],flavor:"花香 · 柑橘 · 莓果 · 红茶",
+ intro:"布隆迪与卢旺达风土相近，高海拔波旁水洗带柔和花香与莓果酸，干净明亮。",
+ advice:"浅中焙，Agtron 豆 63–68，发展 1:25–1:45。"}),
+mk({id:"malawi",name:"马拉维（水洗）",en:"MALAWI WASHED",
+ region:"非洲",country:"马拉维 · 姆祖祖",variety:"卡杜拉 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:61,
+ feats:["柑橘","焦糖","坚果","茶感","干净"],flavor:"柑橘 · 焦糖 · 坚果 · 茶感",
+ intro:"马拉维高原咖啡产量小，水洗豆干净带柑橘与焦糖甜，风格温和。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
+mk({id:"zambia",name:"卡萨马（水洗）",en:"KASAMA WASHED",
+ region:"非洲",country:"赞比亚 · 卡萨马",variety:"波旁 / 卡蒂摩",process:"水洗",alt:"1500–1700m",density:"中高",level:"中焙",ag:61,
+ feats:["柑橘","红糖","坚果","巧克力","干净"],flavor:"柑橘 · 红糖 · 坚果 · 巧克力",
+ intro:"赞比亚北部产区，水洗豆干净带柑橘与坚果甜，是南部非洲精品的代表。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
+mk({id:"id-mandheling",name:"曼特宁（湿刨）",en:"MANDHELING GILING BASAH",
+ region:"亚洲",country:"印尼 · 苏门答腊",variety:"卡蒂摩 Catimor",process:"湿刨",alt:"1200–1500m",density:"中",level:"深焙",ag:45,
+ feats:["雪松","草本","巧克力","泥土","低酸厚重"],flavor:"草本 · 雪松 · 黑巧 · 极低酸",
+ intro:"苏门答腊湿刨法造就独特草本与泥土调，body 极厚、酸度极低，是深焙与意式经典。",
+ advice:"深焙，Agtron 豆 43–50，可进二爆。发展 2:10–2:30，DTR 23–25%。湿刨豆含水高，干燥期拉长。",
+ base:{charge:215,turn:[70,100],yellow:[285,157],fc:[530,202],drop:[665,223],power:[[0,100],[70,93],[185,82],[285,67],[410,54],[530,40],[600,30],[665,14]],air:[[0,20],[70,30],[285,50],[530,70],[665,90]]}}),
+mk({id:"id-java",name:"爪哇（水洗）",en:"JAVA WASHED",
+ region:"亚洲",country:"印尼 · 爪哇",variety:"铁皮卡 Typica",process:"水洗",alt:"1000–1400m",density:"中",level:"中深焙",ag:54,
+ feats:["草本","雪松","巧克力","低酸","醇厚"],flavor:"草本 · 雪松 · 巧克力 · 醇厚",
+ intro:"爪哇是印尼最早种植咖啡的岛屿，水洗豆带温和草本与雪松调，body 厚、酸度低。",
+ advice:"中深焙，Agtron 豆 51–56，发展 2:00–2:20。"}),
+mk({id:"id-sulawesi",name:"苏拉威西（水洗）",en:"SULAWESI WASHED",
+ region:"亚洲",country:"印尼 · 苏拉威西",variety:"铁皮卡 / 卡蒂摩",process:"水洗",alt:"1200–1600m",density:"中",level:"中深焙",ag:53,
+ feats:["草本","坚果","巧克力","低酸","厚实"],flavor:"草本 · 坚果 · 巧克力 · 厚实",
+ intro:"苏拉威西托纳加高原水洗豆带独特草本与坚果调，body 厚实、酸度低，风格接近曼特宁但更干净。",
+ advice:"中深焙，Agtron 豆 50–55，发展 2:00–2:20。"}),
+mk({id:"vn-dalat",name:"大叻（水洗）",en:"DA LAT WASHED",
+ region:"亚洲",country:"越南 · 大叻",variety:"铁皮卡 / 卡蒂摩",process:"水洗",alt:"1500–1700m",density:"中高",level:"中焙",ag:60,
+ feats:["坚果","焦糖","柑橘","茶感","干净"],flavor:"坚果 · 焦糖 · 柑橘 · 茶感",
+ intro:"越南以罗布斯塔闻名，但大叻高海拔阿拉比卡水洗豆干净带柑橘与坚果甜，是越南精品的代表。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
+mk({id:"in-mysore",name:"迈索尔（水洗）",en:"MYSORE WASHED",
+ region:"亚洲",country:"印度 · 迈索尔",variety:"卡蒂摩 / 铁皮卡",process:"水洗",alt:"1000–1400m",density:"中",level:"中深焙",ag:56,
+ feats:["坚果","巧克力","香料","低酸","醇厚"],flavor:"坚果 · 巧克力 · 香料 · 醇厚",
+ intro:"印度南部主产区，水洗豆带坚果巧克力与温和香料调，body 厚、酸度低，是印度精品的代表。",
+ advice:"中深焙，Agtron 豆 53–58，发展 2:00–2:15。"}),
+mk({id:"yn-baoshan",name:"保山（水洗）",en:"BAOSHAN WASHED",
+ region:"亚洲",country:"中国 · 云南保山",variety:"铁皮卡 / 卡蒂摩",process:"水洗",alt:"1400–1600m",density:"中高",level:"中焙",ag:60,
+ feats:["坚果","红糖","柑橘","茶感","干净"],flavor:"坚果 · 红糖 · 柑橘 · 茶感",
+ intro:"云南新版图代表产区，高海拔水洗豆干净、带茶感与红糖甜，性价比高，适合日常与练习。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。注意部分卡蒂摩有罗布斯塔血统，别焙过苦。",
+ base:{charge:204,turn:[60,94],yellow:[250,151],fc:[480,198],drop:[572,209],power:[[0,97],[60,90],[158,74],[250,59],[365,44],[480,31],[572,18]],air:[[0,20],[60,30],[250,50],[480,70],[572,90]]}}),
+mk({id:"yn-lincang",name:"临沧（日晒）",en:"LINCANG NATURAL",
+ region:"亚洲",country:"中国 · 云南临沧",variety:"卡蒂摩 / 铁皮卡",process:"日晒",alt:"1500–1800m",density:"中高",level:"中焙",ag:59,
+ feats:["莓果","红糖","坚果","巧克力","甜感"],flavor:"莓果 · 红糖 · 坚果 · 甜感",
+ intro:"云南临沧日晒豆近年品质提升明显，带柔和莓果与红糖甜，是国产精品的新势力。",
+ advice:"中焙，Agtron 豆 56–62，发展 1:45–2:05，风力偏开防发酵。"}),
+mk({id:"ye-mocha",name:"摩卡（日晒）",en:"YEMEN MOCHA NATURAL",
+ region:"亚洲",country:"也门 · 哈拉兹",variety:"原生种 Typica 变种",process:"日晒",alt:"1500–2000m",density:"中高",level:"中深焙",ag:55,
+ feats:["巧克力","酒香","香料","莓果","野性"],flavor:"巧克力 · 酒香 · 香料 · 野性",
+ intro:"也门摩卡是咖啡历史上的传奇，梯田日晒带来野性的酒香、巧克力与香料调，风味独特。",
+ advice:"中深焙，Agtron 豆 52–57，发展 1:55–2:15。野性风味忌焙过深掩盖层次。"}),
+mk({id:"png",name:"瓦盖（水洗）",en:"WAGHI WASHED",
+ region:"大洋洲",country:"巴布亚新几内亚 · 瓦盖",variety:"铁皮卡 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:61,
+ feats:["坚果","柑橘","红糖","巧克力","干净"],flavor:"坚果 · 柑橘 · 红糖 · 巧克力",
+ intro:"巴新高海拔水洗豆干净带坚果与柑橘甜，body 中等、风味温和，是大洋洲精品的主力。",
+ advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"})
+];
+const COUNTRIES=new Set(BEANS.map(b=>b.country.split(" · ")[0]));
+
+let curBean=BEANS[0],curG=200,curP=null,simT=0,simRun=false,simRAF=null,region="全部";
+let wizSurvey=null;
+let roastMode="medium";
+const modeName=()=>({light:"浅烘",medium:"中烘",dark:"深烘"}[roastMode]||"中烘");
+const needSecondCrack=()=>roastMode==="dark";
+function setRoastMode(v){
+  roastMode=v;
+  const el=document.getElementById("roastMode");if(el)el.value=v;
+  if(m1Await&&(m1Await==="scS"||m1Await==="scE")&&!needSecondCrack()){
+    m1Confirmed[m1Await]=true;m1Await=m1CalcAwait();
+  }
+  renderM1Events();m1UpdateHint();drawChart();refreshTable();
+  toast(`已切换为${modeName()}模式：${needSecondCrack()?"事件面板保留二爆":"自动跳过二爆，一爆结束后直接下豆冷却"}`);
+}
+
+const CALIB_KEY="coffeeRoastCalib_v1";
+function loadCalib(){try{return JSON.parse(localStorage.getItem(CALIB_KEY)||"{}");}catch(e){return {};}}
+function saveCalib(c){try{localStorage.setItem(CALIB_KEY,JSON.stringify(c));return true;}catch(e){return false;}}
+function getBase(b){
+  const c=loadCalib()[b.id];
+  if(!c||!c.adj)return b.base;
+  return applyAdj(b.base,c.adj);
+}
+function buildP(){curP=scaleProfile(getBase(curBean),curG);}
+
+function scaleProfile(base,g){
+  const f  = g===200?1 : g===100?0.80:0.66;
+  const pf = g===200?1 : g===100?0.82:0.66;
+  const ca = g===200?0 : g===100?-12:-22;
+  const td = g===200?0 : g===100?-1:-2;
+  const T =([t,temp])=>[Math.max(1,Math.round(t*f)),temp+td];
+  const p={
+    charge:base.charge+ca,
+    turn:T(base.turn),yellow:T(base.yellow),fc:T(base.fc),drop:T(base.drop),
+    power:base.power.map(([t,v])=>[Math.round(t*f),Math.round(v*pf)]),
+    air:base.air.map(([t,v])=>[Math.round(t*f),v])
+  };
+  p.dev=Math.max(1,p.drop[0]-p.fc[0]);
+  p.dtr=Math.round(p.dev/Math.max(1,p.drop[0])*100);
+  p.fcEnd   =[p.fc[0]+Math.max(5,Math.round(p.dev*0.45)),p.fc[1]+3];
+  p.scStart =[p.fc[0]+Math.max(15,Math.round(p.dev*1.15)),Math.min(216,p.fc[1]+14)];
+  p.scEnd   =[p.scStart[0]+Math.max(8,Math.round(p.dev*0.35)),p.scStart[1]+3];
+  p.fcTimer =Math.max(0,p.fcEnd[0]-p.fc[0]);
+  p.scTimer =Math.max(0,p.scEnd[0]-p.scStart[0]);
+  p.env=[[0,p.charge],[p.turn[0],p.turn[1]+34],[p.yellow[0],p.yellow[1]+10],
+         [p.fc[0],p.fc[1]+12],[p.drop[0],p.drop[1]+8]];
+  p.targetBean=p.drop[1];
+  return p;
+}
+
+const fmt=s=>`${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.round(s%60)).padStart(2,"0")}`;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const interp=(arr,t)=>{
+  if(t<=arr[0][0])return arr[0][1];
+  for(let i=0;i<arr.length-1;i++){
+    if(t<=arr[i+1][0]){const [x0,y0]=arr[i],[x1,y1]=arr[i+1];
+      const dx=Math.max(0.001,x1-x0);
+      return y0+(y1-y0)*(t-x0)/dx;}
+  }return arr[arr.length-1][1];
+};
+function hermite(pts){
+  const n=pts.length,m=[];
+  for(let i=0;i<n;i++){
+    if(i===0)m[i]=(pts[1][1]-pts[0][1])/Math.max(0.001,(pts[1][0]-pts[0][0]));
+    else if(i===n-1)m[i]=(pts[n-1][1]-pts[n-2][1])/Math.max(0.001,(pts[n-1][0]-pts[n-2][0]));
+    else{const d1=(pts[i][1]-pts[i-1][1])/Math.max(0.001,(pts[i][0]-pts[i-1][0]));
+      const d2=(pts[i+1][1]-pts[i][1])/Math.max(0.001,(pts[i+1][0]-pts[i][0]));m[i]=(d1+d2)/2;}
+  }
+  return x=>{
+    let i=0;while(i<n-2&&x>pts[i+1][0])i++;
+    const [x0,y0]=pts[i],[x1,y1]=pts[i+1],h=Math.max(0.001,x1-x0),t=(x-x0)/h;
+    const t2=t*t,t3=t2*t;
+    return (2*t3-3*t2+1)*y0+(t3-2*t2+t)*h*m[i]+(-2*t3+3*t2)*y1+(t3-t2)*h*m[i+1];
+  };
+}
+let BT=null,RORF=null,ET=null;
+function makeBT(){
+  const p=curP;
+  BT=hermite([[0,p.charge+6],[p.turn[0],p.turn[1]],[p.yellow[0],p.yellow[1]],
+    [p.fc[0],p.fc[1]],[p.drop[0],p.drop[1]]]);
+  const light=curBean.level.includes("浅");
+  const peak=light?22:19,yR=light?14:12,fcR=9,dropR=light?6:5;
+  RORF=hermite([[p.turn[0],peak],[p.yellow[0],yR],[p.fc[0],fcR],[p.drop[0],dropR]]);
+  ET=hermite(p.env);
+}
+function rorAt(t){
+  if(!RORF)return 0;
+  if(t<curP.turn[0])return 0;
+  return Math.max(0,RORF(Math.min(t,curP.drop[0])));
+}
+function etAt(t){
+  if(!ET)return 0;
+  return Math.round(ET(Math.min(Math.max(t,0),curP.drop[0])));
+}
+function devRateAt(t){
+  const p=curP;
+  if(t<=p.fc[0])return 0;
+  return Math.round((t-p.fc[0])/Math.max(1,t)*100);
+}
+function phaseAt(t){
+  const p=curP;
+  if(t<p.turn[0])return ["回温期","入豆后豆温先降后升，约 1 分钟触底回升。回温点偏高说明蓄热太足，需降入豆温度。"];
+  if(t<p.yellow[0])return ["干燥期","水分从 11% 降到 5%，豆色青绿转黄。听不到爆裂声，闻青草味转面包香。ROR 平稳上升。"];
+  if(t<p.fc[0])return ["黄化 / 梅拉德","约 150℃ 启动褐变，产生烘焙香气。开始逐步收火，留意 ROR 拐点，别让它翘头。"];
+  if(t<p.drop[0])return ["一爆 / 发展期","细胞壁破裂发出「啪啪」声，development 从此计时。持续降火，ROR 只许降不许升。"];
+  return ["下豆 / 冷却","达到目标豆温立即出豆，快速摊薄冷却。记录失重与色值，对照曲线复盘。"];
+}
+function liveTipAt(t){
+  const p=curP,fire=Math.round(interp(p.power,t)),air=Math.round(interp(p.air,t));
+  return `火力 ${fire} · 风力 ${air} · 豆温 ${Math.round(BT(t))}℃ / 风温 ${etAt(t)}℃ · ROR ${rorAt(t).toFixed(1)} · 发展率 ${devRateAt(t)}%`;
+}
+
+function advise(target,inp){
+  const A=[];
+  const clampK=(v)=>clamp(Math.round(v),0,100);
+  const add=(kind,dir,val,reason)=>{
+    let to=null,from=null;
+    if(kind==="fire"){
+      from=(inp.fire==null?target.fire:inp.fire);
+      const delta=(dir==="up"?1:dir==="down"?-1:0)*(val||0);
+      to=clampK(delta?from+delta:target.fire);
+      if(capped&&to>fireMax)to=fireMax;
+    }else if(kind==="air"){
+      from=(inp.air==null?target.air:inp.air);
+      const delta=(dir==="open"?1:dir==="close"?-1:0)*(val||0);
+      to=clampK(delta?from+delta:target.air);
+    }else if(kind==="stir"){
+      from=(inp.stir==null?target.stir:inp.stir);
+      const delta=(dir==="up"?1:dir==="down"?-1:0)*(val||0);
+      to=clampK(delta?from+delta:target.stir);
+    }
+    A.push({kind,dir,val,from,to,reason});
+  };
+  const capped=!!inp.capped,fireMax=capped?+inp.fireMax||50:100;
+  const dFire=inp.fire==null?0:inp.fire-target.fire;
+  const dAir =inp.air ==null?0:inp.air -target.air;
+  const dBt  =inp.bt  ==null?0:inp.bt  -target.bt;
+  const dEt  =inp.et  ==null?0:inp.et  -target.et;
+  const dRor =inp.ror ==null?0:inp.ror -target.ror;
+  const dDev =inp.dev ==null?0:inp.dev -target.dev;
+  const dStir=inp.stir==null?0:inp.stir-target.stir;
+
+  const needMoreHeat=(dFire<-5)||(dBt<-5)||(dRor<-2.5)||(dEt<-6);
+  let capAirOpened=false;
+  if(capped && target.fire>fireMax && needMoreHeat){
+    add("air","open",20,`目标火力 ${target.fire} 超上限 ${fireMax} → 风门上调 20 补偿。`);
+    capAirOpened=true;
+    add("process","—",0,"仍升温不足则减量至 60–70% 或提高入豆温 3–5℃。");
+  }
+  if(!capped&&dFire<-5)add("fire","up",Math.min(10,Math.ceil(-dFire/2)),
+    `火力低 ${Math.round(-dFire)}，升温偏慢 → 火力上调 ${Math.min(10,Math.ceil(-dFire/2))}。`);
+  else if(!capped&&dFire>5)add("fire","down",Math.min(10,Math.ceil(dFire/2)),
+    `火力高 ${Math.round(dFire)}，尾段易焦苦 → 火力下调 ${Math.min(10,Math.ceil(dFire/2))}。`);
+  if(dAir<-10&&!capAirOpened)add("air","open",Math.min(30,Math.ceil(-dAir/10)*10),
+    `风门低 ${Math.round(-dAir)}，排烟偏慢 → 风门上调 ${Math.min(30,Math.ceil(-dAir/10)*10)}。`);
+  else if(dAir>10)add("air","close",Math.min(30,Math.ceil(dAir/10)*10),
+    `风门高 ${Math.round(dAir)}，热量易流失 → 风门下调 ${Math.min(30,Math.ceil(dAir/10)*10)}。`);
+  if(dBt<-5){
+    if(dRor<-2){if(capped)add("process","—",0,`豆温低 ${Math.round(-dBt)}℃ 且 ROR 低 ${dRor.toFixed(1)}：关小风门蓄热或减量。`);
+      else add("fire","up",3,`豆温低 ${Math.round(-dBt)}℃ 且 ROR 低 ${dRor.toFixed(1)}：火力上调 3 并略降风门。`);}
+    else add("process","—",0,`豆温低 ${Math.round(-dBt)}℃ 但 ROR 正常：时间未到，延长本阶段。`);
+  }else if(dBt>5){
+    if(dRor>2)add("fire","down",3,`豆温高 ${Math.round(dBt)}℃ 且 ROR 高 ${dRor.toFixed(1)}：火力下调 3 并开大风门。`);
+    else add("process","—",0,`豆温高 ${Math.round(dBt)}℃ 但 ROR 正常：准备提前进入下一阶段。`);
+  }
+  const hasFU=A.some(x=>x.kind==="fire"&&x.dir==="up"),hasFD=A.some(x=>x.kind==="fire"&&x.dir==="down");
+  const hasAO=A.some(x=>x.kind==="air"&&x.dir==="open"),hasAC=A.some(x=>x.kind==="air"&&x.dir==="close");
+  if(dRor<-2.5){
+    if(hasFU){if(!hasAC)add("air","close",10,`ROR 低 ${dRor.toFixed(1)}：配合风门下调 10 蓄热。`);}
+    else if(capped){add("process","—",0,`ROR 低 ${dRor.toFixed(1)} 防 Crash：优先减量或提入豆温。`);}
+    else if(!hasAC)add("fire","up",2,`ROR 低 ${dRor.toFixed(1)} 防 Crash → 火力上调 2 或风门下调 10。`);
+  }else if(dRor>2.5){
+    if(hasAO){if(!hasFD)add("fire","down",2,`ROR 高 ${dRor.toFixed(1)}：开风门同时火力下调 2。`);}
+    else if(!hasFD)add("air","open",10,`ROR 高 ${dRor.toFixed(1)} 防 Flick → 风门上调 10 散热。`);
+  }
+  if(inp.et!=null && Math.abs(dEt)>6){
+    if(dEt<-6){
+      if(capped)add("process","—",0,`风温低 ${Math.round(-dEt)}℃：关小风门蓄热或提入豆温。`);
+      else add("fire","up",Math.min(8,Math.ceil(-dEt/2)),`风温低 ${Math.round(-dEt)}℃：火力上调 ${Math.min(8,Math.ceil(-dEt/2))}。`);
+    }else add("air","open",10,`风温高 ${Math.round(dEt)}℃：风门上调 10 带走多余热量。`);
+  }
+  if(inp.dev!=null && target.dev>0 && Math.abs(dDev)>3){
+    if(dDev<-3)add("process","—",0,`发展率 ${inp.dev}% 低于目标 ${target.dev}%：延长发展时间，勿急下豆。`);
+    else add("process","—",0,`发展率 ${inp.dev}% 高于目标 ${target.dev}%：提前下豆缩短发展。`);
+  }
+  if(inp.stir!=null && Math.abs(dStir)>8){
+    if(dStir<-8){
+      add("stir","up",Math.min(15,Math.ceil(-dStir/2)),
+        `搅拌低 ${Math.round(-dStir)}，翻滚偏弱 → 搅拌上调 ${Math.min(15,Math.ceil(-dStir/2))}。`);
+    }else{
+      add("stir","down",Math.min(15,Math.ceil(dStir/2)),
+        `搅拌高 ${Math.round(dStir)}，翻滚过强 → 搅拌下调 ${Math.min(15,Math.ceil(dStir/2))}。`);
+    }
+  }
+  if(!A.length)add("ok","—",0,"读数与目标吻合，保持当前设置。");
+  return A;
+}
+
+function setRegion(r){
+  region=r;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.r===r));
+  renderBeans();
+}
+function renderBeans(){
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const cal=loadCalib();
+  const list=BEANS.filter(b=>(region==="全部"||b.region===region)&&
+    (!q||(b.name+b.en+b.variety+b.country+b.feats.join("")+b.flavor).toLowerCase().includes(q)));
+  document.getElementById("beanCount").textContent=list.length;
+  document.getElementById("countryCount").textContent=COUNTRIES.size;
+  document.getElementById("beanGrid").innerHTML=list.map(b=>`
+    <div class="bean-card ${b.id===curBean.id?"sel":""}" onclick="selectBean('${b.id}')">
+      <span class="lv">${b.level.replace("焙","")}</span>
+      <div class="nm">${b.name}</div>
+      <div class="meta">${b.country.split(" · ")[0]} · ${b.process} · Ag${b.ag}</div>
+      ${cal[b.id]?'<span class="cal">● 已校准</span>':''}
+    </div>`).join("");
+  const badge=document.getElementById("calibBadge");
+  if(cal[curBean.id]){badge.style.display="inline-block";badge.textContent=`已校准 · 第 ${cal[curBean.id].sessions||1} 次`;}
+  else badge.style.display="none";
+}
+function selectBean(id){
+  curBean=BEANS.find(b=>b.id===id);buildP();makeBT();simT=0;stopSim();
+  m1Marks={};m1Manual={};m1Trace=[];m1SimActive=false;m1KnobCustom={fire:false,air:false,target:false};m1Confirmed={};m1Await=null;
+  document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
+  renderBeans();openModal();refreshAll();renderM1Events();m1LiveResetBox();
+}
+function openModal(){
+  const b=curBean,c=loadCalib()[b.id];
+  document.getElementById("modalBody").innerHTML=`
+    <span class="x" onclick="closeModal()">×</span>
+    <h3>${b.name}</h3><div class="en">${b.en}</div>
+    <div class="kv">
+      <div><b>产区</b> ${b.country}</div><div><b>品种</b> ${b.variety}</div>
+      <div><b>处理法</b> ${b.process}</div><div><b>海拔</b> ${b.alt}</div>
+      <div><b>豆密度</b> ${b.density}</div><div><b>建议焙度</b> ${b.level}</div>
+    </div>
+    <div style="font-size:12px;color:var(--coffee);font-weight:600">风味画像</div>
+    <div class="tags">${b.feats.map(f=>`<span class="tag f">${f}</span>`).join("")}</div>
+    <p><b>杯测风味：</b>${b.flavor}</p>
+    <p><b>豆种特性：</b>${b.intro}</p>
+    <p><b>烘焙建议：</b>${b.advice}</p>
+    ${c?`<div class="advice"><b class="ok">已应用校准（第 ${c.sessions||1} 次）</b><br>${c.note||""}</div>`:""}
+    <div class="modal-btns">
+      <button type="button" class="go" onclick="closeModal()">开始烘焙 →</button>
+      <button type="button" class="go ghost" onclick="closeModal();document.getElementById('m1Panel').scrollIntoView({behavior:'smooth',block:'start'})">打开设备面板 🎛️</button>
+    </div>`;
+  document.getElementById("mask").classList.add("show");
+}
+function closeModal(){document.getElementById("mask").classList.remove("show");}
+document.getElementById("mask").addEventListener("click",e=>{if(e.target.id==="mask")closeModal();});
+
+function setSize(g){
+  curG=g;buildP();makeBT();simT=0;stopSim();m1Marks={};
+  m1Manual={};m1Trace=[];m1SimActive=false;m1KnobCustom={fire:false,air:false,target:false};m1Confirmed={};m1Await=null;
+  document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
+  document.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on",+b.dataset.g===g));
+  refreshAll();renderM1Events();m1LiveResetBox();toast(`已切换至 ${g}g 方案 · 参数自动适配`);
+}
+
+/* 稳健绘制高清曲线图：即使在首次渲染或横屏缩放时容器宽度尚未稳定也可靠绘制 */
+function drawChart(){
+  const wrap=document.getElementById("chartWrap");
+  const cv=document.getElementById("chart");
+  if(!cv||!curP||!BT)return;
+  const ctx=cv.getContext("2d");
+  if(!ctx)return;
+
+  const dpr=Math.min(window.devicePixelRatio||1, 3);
+  const rawW=wrap&&wrap.clientWidth?wrap.clientWidth-12:0;
+  const cssW=rawW>120?rawW:Math.max(300,(window.innerWidth||640)-48);
+  const cssH=Math.max(150,Math.round(cssW * 0.44));
+
+  cv.style.width=cssW+"px";
+  cv.style.height=cssH+"px";
+  cv.width=Math.round(cssW*dpr);
+  cv.height=Math.round(cssH*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const W=cssW,H=cssH;
+  const L=36,R=34,T=18,B=24,pw=Math.max(60,W-L-R),ph=Math.max(60,H-T-B);
+  const p=curP,tMax=Math.max(60,p.drop[0]+15),tMinT=80,tMaxT=230,rMax=30;
+  const X=t=>L+clamp(t/tMax,0,1)*pw;
+  const YT=temp=>T+ph-(clamp(temp,tMinT,tMaxT)-tMinT)/(tMaxT-tMinT)*ph;
+  const YR=r=>T+ph-clamp(r,0,rMax)/rMax*ph;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#fffdf7";
+  ctx.fillRect(0,0,W,H);
+
+  const bands=[[0,p.turn[0],"#f3ead2","回温"],[p.turn[0],p.yellow[0],"#efe4c8","干燥"],
+    [p.yellow[0],p.fc[0],"#e8d3a0","梅拉德"],[p.fc[0],p.drop[0],"#dcbd82","发展"]];
+  bands.forEach(([a,b,c,n])=>{
+    const x1=X(a),x2=X(b);
+    ctx.fillStyle=c;ctx.globalAlpha=.55;ctx.fillRect(x1,T,Math.max(0,x2-x1),ph);ctx.globalAlpha=1;
+    ctx.fillStyle="#7d7466";ctx.font="9.5px sans-serif";ctx.textAlign="center";
+    if(x2-x1>22)ctx.fillText(n,(x1+x2)/2,T+11);
+  });
+
+  ctx.strokeStyle="#e0d5b8";ctx.lineWidth=1;ctx.fillStyle="#7d7466";ctx.font="9.5px sans-serif";
+  for(let temp=100;temp<=220;temp+=20){const y=YT(temp);
+    ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(W-R,y);ctx.stroke();
+    ctx.textAlign="right";ctx.fillText(temp,L-4,y+3);}
+  for(let r=0;r<=rMax;r+=10){const y=YR(r);ctx.textAlign="left";ctx.fillText(r,W-R+4,y+3);}
+  ctx.textAlign="center";
+  const stepSec=tMax>540?120:60;
+  for(let t=0;t<=tMax;t+=stepSec){const x=X(t);
+    ctx.strokeStyle="rgba(224,213,184,.55)";ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();
+    ctx.fillStyle="#7d7466";ctx.fillText(fmt(t),x,H-7);}
+
+  ctx.fillStyle="#6b4a2f";ctx.textAlign="left";ctx.font="bold 9.5px sans-serif";ctx.fillText("豆温℃",2,11);
+  ctx.textAlign="right";ctx.fillStyle="#a61b1b";ctx.fillText("ROR",W-2,11);
+
+  const drawCurve=(fn,toY,color,w,dash)=>{
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=w;ctx.setLineDash(dash||[]);
+    for(let t=0;t<=p.drop[0];t+=3){const x=X(t),y=toY(fn(t));t===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    ctx.stroke();ctx.setLineDash([]);
+  };
+  drawCurve(t=>interp(p.power,t),v=>T+ph-v/100*ph,"#c5a059",1.5,[4,3]);
+  drawCurve(t=>interp(p.air,t),v=>T+ph-v/100*ph,"#2e5c8a",1.5,[2,3]);
+
+  ctx.beginPath();ctx.strokeStyle="#a61b1b";ctx.lineWidth=2.1;let started=false;
+  for(let t=p.turn[0];t<=p.drop[0];t+=3){const x=X(t),y=YR(rorAt(t));started?ctx.lineTo(x,y):ctx.moveTo(x,y);started=true;}
+  ctx.stroke();
+
+  drawCurve(t=>etAt(t),YT,"#3a8a9a",1.7,[5,3]);
+  drawCurve(t=>BT(t),YT,"#6b4a2f",2.6);
+
+  const nodes=[["回温",p.turn],["转黄",p.yellow],["一爆",p.fc],["一爆末",p.fcEnd],["下豆",p.drop]];
+  nodes.forEach(([n,[t,temp]])=>{
+    const x=X(Math.min(t,p.drop[0]+15)),y=YT(temp);
+    ctx.fillStyle="#a61b1b";ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle="#a61b1b";ctx.font="bold 9px sans-serif";ctx.textAlign="center";
+    ctx.fillText(n,x,y-6);
+  });
+
+  if(needSecondCrack()){
+    [["二爆",p.scStart],["二爆末",p.scEnd]].forEach(([n,[t,temp]])=>{
+      const x=X(Math.min(t,tMax)),y=YT(temp);
+      ctx.fillStyle="#7a3b8a";ctx.beginPath();ctx.arc(x,y,3.2,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#7a3b8a";ctx.font="8.5px sans-serif";ctx.textAlign="center";ctx.fillText(n,x,y-6);
+    });
+  }
+
+  if(m1Trace.length){
+    const tMaxT=p.drop[0];
+    const drawTrace=(key,toY,color)=>{
+      const pts=m1Trace.filter(z=>z[key]!=null).map(z=>[Math.min(z.t,tMaxT),z[key]]).sort((a,b)=>a[0]-b[0]);
+      if(!pts.length)return;
+      ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash([]);ctx.beginPath();
+      pts.forEach(([tt,vv],i)=>{const x=X(tt),y=toY(vv);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+      pts.forEach(([tt,vv])=>{const x=X(tt),y=toY(vv);
+        ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,3.6,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke();});
+    };
+    drawTrace("bt",YT,"#c0392b");
+    drawTrace("et",YT,"#1f8a99");
+    drawTrace("ror",YR,"#7a3b8a");
+  }
+
+  if(simT>0||simRun){const x=X(simT);
+    ctx.strokeStyle="#2b2b2b";ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();
+    const y=YT(BT(simT));ctx.fillStyle="#2b2b2b";ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();}
+}
+
+function refreshDash(){
+  const p=curP,t=simT;
+  const fire=Math.round(interp(p.power,t)),air=Math.round(interp(p.air,t)),temp=Math.round(BT(t)),ror=rorAt(t);
+  const env=etAt(t),dev=devRateAt(t);
+  document.getElementById("gFire").innerHTML=fire+'<small> /100</small>';
+  document.getElementById("gAir").innerHTML=air+'<small> /100</small>';
+  document.getElementById("gTemp").innerHTML=temp+'<small> ℃</small>';
+  document.getElementById("gEnv").innerHTML=env+'<small> ℃</small>';
+  document.getElementById("gRor").innerHTML=ror.toFixed(1)+'<small> ℃/min</small>';
+  document.getElementById("gDev").innerHTML=dev+'<small> %</small>';
+  document.getElementById("bFire").style.width=fire+"%";
+  document.getElementById("bAir").style.width=air+"%";
+  document.getElementById("bTemp").style.width=Math.max(0,(temp-80)/150*100)+"%";
+  document.getElementById("bEnv").style.width=Math.max(0,(env-80)/150*100)+"%";
+  document.getElementById("bRor").style.width=Math.max(0,ror/30*100)+"%";
+  document.getElementById("bDev").style.width=Math.min(100,dev)+"%";
+  const [pn,ph]=phaseAt(t);
+  document.getElementById("clock").textContent=fmt(t);
+  document.getElementById("phaseName").textContent=pn;
+  document.getElementById("phaseHint").textContent=ph;
+  document.getElementById("liveTip").textContent=liveTipAt(t);
+  const sc=document.getElementById("scrub");if(!simRun)sc.value=(t/Math.max(1,p.drop[0])*100);
+  refreshM1(t,fire,air,temp,env,ror,dev);
+}
+
+const M1_EVENTS=[
+  {key:"charge", label:"放豆入炉", at:()=>0},
+  {key:"turn",   label:"回温点",   at:p=>p.turn[0]},
+  {key:"yellow", label:"转黄",     at:p=>p.yellow[0]},
+  {key:"fcS",    label:"一爆开始", at:p=>p.fc[0]},
+  {key:"fcE",    label:"一爆结束", at:p=>p.fcEnd[0]},
+  {key:"scS",    label:"二爆开始", at:p=>p.scStart[0]},
+  {key:"scE",    label:"二爆结束", at:p=>p.scEnd[0]},
+  {key:"drop",   label:"下豆冷却", at:p=>p.drop[0]}
+];
+let m1Marks={};
+let m1SimActive=false;
+let m1Manual={};
+let m1Trace=[];
+let m1KnobCustom={fire:false,air:false,target:false};
+let m1Confirmed={};
+let m1Await=null;
+let m1LastKey=null;
+let m1LoadedId=null;
+
+function m1Val(key,curveVal){return (m1Manual[key]!=null)?m1Manual[key]:curveVal;}
+function m1RefreshVals(){refreshDash();}
+function m1ActiveEvents(){return M1_EVENTS.filter(e=>needSecondCrack()||(e.key!=="scS"&&e.key!=="scE"));}
+function m1CalcAwait(){
+  for(const e of m1ActiveEvents()){if(!m1Confirmed[e.key])return e.key;}
+  return null;
+}
+function stirAt(t){
+  const p=curP,tt=clamp(t,0,p.drop[0]);
+  if(tt<=p.yellow[0])return 65;
+  if(tt<=p.fc[0])return Math.round(65-(tt-p.yellow[0])/Math.max(1,p.fc[0]-p.yellow[0])*8);
+  return Math.round(57-(tt-p.fc[0])/Math.max(1,p.drop[0]-p.fc[0])*12);
+}
+
+function autoMarkEvents(){
+  // 取消自动打点：回温点改为在用户点击“回温点”按钮时，按当前实际烘焙时间记录
+}
+function renderM1Events(){
+  const p=curP,sc=needSecondCrack();
+  document.getElementById("m1Events").innerHTML=M1_EVENTS.map(e=>{
+    if((e.key==="scS"||e.key==="scE")&&!sc)
+      return `<div class="m1-ev" style="opacity:.38;cursor:not-allowed"><span>${e.label}</span><span class="tm">—</span></div>`;
+    const tm=m1Marks[e.key]!=null?fmt(m1Marks[e.key]):fmt(e.at(p));
+    return `<div class="m1-ev ${m1Marks[e.key]!=null?"on":""}" id="m1ev_${e.key}" onclick="m1Mark('${e.key}')"><span>${e.label}</span><span class="tm">${tm}</span></div>`;
+  }).join("");
+  const scT=document.getElementById("m1ev_scTimerBox");
+  if(scT)scT.style.display=sc?"flex":"none";
+}
+
+function refreshM1(t,fire,air,temp,env,ror,dev){
+  const p=curP;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+  set("m1Clock",fmt(t));
+  const btv=m1Val("bt",temp),etv=m1Val("et",env),rorv=m1Val("ror",ror),
+        devv=m1Val("dev",dev),stirv=m1Val("stir",stirAt(t)),tgtv=m1Val("target",p.targetBean);
+  set("m1Bt",Math.round(btv)+'<small>℃</small>');
+  set("m1Et",Math.round(etv)+'<small>℃</small>');
+  set("m1Ror",(+rorv).toFixed(1)+'<small>℃/m</small>');
+  set("m1Dev",Math.round(devv)+'<small>%</small>');
+  set("m1Stir",Math.round(stirv)+'<small>/100</small>');
+  set("m1Target",Math.round(tgtv)+'<small>℃</small>');
+  const fcT=m1Marks.fcS!=null&&m1Marks.fcE!=null?m1Marks.fcE-m1Marks.fcS:p.fcTimer;
+  const scT=m1Marks.scS!=null&&m1Marks.scE!=null?m1Marks.scE-m1Marks.scS:p.scTimer;
+  set("m1FcTimer",fmt(Math.max(0,fcT)));
+  set("m1ScTimer",fmt(Math.max(0,scT)));
+  const slC=document.getElementById("slClock");if(slC)slC.value=Math.round(t/Math.max(1,p.drop[0])*100);
+  [["slBt",btv],["slEt",etv],["slRor",rorv],["slDev",devv],["slStir",stirv],["slTarget",tgtv]].forEach(([id,v])=>{
+    const e=document.getElementById(id);if(e)e.value=v;});
+  if(!m1KnobCustom.fire){const e=document.getElementById("m1Fire");if(e)e.value=Math.round(interp(p.power,Math.min(t,p.drop[0])));}
+  if(!m1KnobCustom.air){const e=document.getElementById("m1Air");if(e)e.value=Math.round(interp(p.air,Math.min(t,p.drop[0])));}
+  m1UpdateHint();
+}
+
+function m1TargetsAt(t){
+  const p=curP,tt=Math.min(t,p.drop[0]),[nm]=phaseAt(tt);
+  return {name:nm,t:tt,fire:Math.round(interp(p.power,tt)),air:Math.round(interp(p.air,tt)),
+    bt:Math.round(BT(tt)),ror:+rorAt(tt).toFixed(1),et:etAt(tt),dev:devRateAt(tt),stir:stirAt(tt)};
+}
+function m1Inputs(){
+  const gv=id=>{const e=document.getElementById(id);if(!e||e.value==="")return null;return parseFloat(e.value);};
+  const rd=(key,id)=>m1Manual[key]!=null?m1Manual[key]:gv(id);
+  return {fire:gv("m1Fire"),air:gv("m1Air"),
+    bt:rd("bt","slBt"),et:rd("et","slEt"),ror:rd("ror","slRor"),dev:rd("dev","slDev"),stir:rd("stir","slStir"),
+    t:null,capped:false,fireMax:100};
+}
+function m1OnRead(key,val){
+  const numVal=parseFloat(val);
+  if(isNaN(numVal))return;
+  if(!m1SimActive){m1SimActive=true;if(m1Marks.charge==null)m1Marks.charge=0;renderM1Events();}
+  m1Manual[key]=numVal;
+  m1LastKey=key;
+  const card=document.getElementById({bt:"cardBt",et:"cardEt",ror:"cardRor",dev:"cardDev",stir:"cardStir",target:"cardTarget"}[key]);
+  if(card)card.classList.add("overridden");
+  m1RefreshVals();
+  m1LiveAdvise();
+  m1LogTrace();
+  drawChart();
+}
+function m1OnClock(v){
+  stopSim();simT=(+v/100)*curP.drop[0];
+  autoMarkEvents();m1RefreshVals();m1LiveAdvise();drawChart();
+}
+function m1ClearRead(key){
+  delete m1Manual[key];
+  const id={bt:"slBt",et:"slEt",ror:"slRor",dev:"slDev",stir:"slStir",target:"slTarget"}[key];
+  const card=document.getElementById(id&&id.replace("sl","card"));
+  if(card)card.classList.remove("overridden");
+  m1RefreshVals();m1LiveAdvise();drawChart();
+}
+function m1LogTrace(){
+  const cur={t:Math.round(simT),bt:m1Manual.bt!=null?m1Manual.bt:Math.round(BT(simT)),
+    et:m1Manual.et!=null?m1Manual.et:etAt(simT),ror:m1Manual.ror!=null?m1Manual.ror:rorAt(simT),
+    stir:m1Manual.stir!=null?m1Manual.stir:stirAt(simT)};
+  const ex=m1Trace.findIndex(x=>Math.abs(x.t-cur.t)<3);
+  if(ex>=0)m1Trace[ex]=cur;else m1Trace.push(cur);
+  if(m1Trace.length>300)m1Trace.shift();
+}
+function pickKnobs(list){
+  const out=[];
+  ["fire","air","stir"].forEach(k=>{
+    const g=list.filter(a=>a.kind===k&&a.to!=null);
+    if(!g.length)return;
+    const base=g[0].from;
+    g.sort((a,b)=>Math.abs(b.to-(b.from==null?base:b.from))-Math.abs(a.to-(a.from==null?base:a.from)));
+    out.push(g[0]);
+  });
+  return out;
+}
+function m1TrendData(t){
+  const p=curP,tt=clamp(t,0,p.drop[0]),back=Math.min(tt,25),pt=Math.max(0,tt-back);
+  const jd=(d,th)=>d>th?"up":d<-th?"down":"hold";
+  return {
+    fire:{dir:jd(interp(p.power,tt)-interp(p.power,pt),3),from:Math.round(interp(p.power,pt)),to:Math.round(interp(p.power,tt))},
+    air :{dir:jd(interp(p.air,tt)-interp(p.air,pt),4),from:Math.round(interp(p.air,pt)),to:Math.round(interp(p.air,tt))},
+    stir:{dir:jd(stirAt(tt)-stirAt(pt),3),from:Math.round(stirAt(pt)),to:Math.round(stirAt(tt))}
+  };
+}
+function renderM1Trend(tg){
+  const el=document.getElementById("m1Trend");if(!el)return;
+  const d=m1TrendData(simT);
+  const cell=(name,o,upTxt,downTxt)=>{
+    const arrow=o.dir==="up"?"▲":o.dir==="down"?"▼":"—";
+    const txt=o.dir==="up"?upTxt:o.dir==="down"?downTxt:"保持";
+    return `<div class="td ${o.dir}"><div class="tn">${name}</div><div class="tv">${arrow}${txt}<small>${o.from}→${o.to}</small></div></div>`;
+  };
+  el.style.display="grid";
+  el.innerHTML=`<div class="td stage-td"><div class="tn">${tg.name}</div><div class="tv" style="color:#ffd479">${fmt(simT)}<small>标${curP.targetBean}℃</small></div></div>`+
+    cell("火力GAS",d.fire,"加大","减小")+cell("风门AIR",d.air,"开大","关小")+cell("搅拌STIR",d.stir,"加快","减慢");
+}
+function m1SingleLatestAdvice(tg,inp){
+  const k=m1LastKey;
+  if(k==="bt" && inp.bt!=null){
+    const d=inp.bt-tg.bt;
+    if(d<-3)return {kind:"fire",dir:"up",reason:`[豆温BT ${Math.round(inp.bt)}℃] 比目标低 ${Math.round(-d)}℃ → 火力上调 ${Math.min(8,Math.ceil(-d/2))} 或关小风门蓄热`};
+    if(d>3) return {kind:"fire",dir:"down",reason:`[豆温BT ${Math.round(inp.bt)}℃] 比目标高 ${Math.round(d)}℃ → 火力下调 ${Math.min(8,Math.ceil(d/2))} 并开大风门`};
+    return {kind:"ok",dir:"—",reason:`[豆温BT ${Math.round(inp.bt)}℃] 与目标 ${tg.bt}℃ 吻合，保持当前节奏`};
+  }
+  if(k==="et" && inp.et!=null){
+    const d=inp.et-tg.et;
+    if(d<-5)return {kind:"fire",dir:"up",reason:`[风温ENV ${Math.round(inp.et)}℃] 比目标低 ${Math.round(-d)}℃ → 火力上调 ${Math.min(8,Math.ceil(-d/2))} 补充热风`};
+    if(d>5) return {kind:"air",dir:"open",reason:`[风温ENV ${Math.round(inp.et)}℃] 比目标高 ${Math.round(d)}℃ → 风门上调 10 带走多余热量`};
+    return {kind:"ok",dir:"—",reason:`[风温ENV ${Math.round(inp.et)}℃] 与目标 ${tg.et}℃ 吻合，保持当前设置`};
+  }
+  if(k==="ror" && inp.ror!=null){
+    const d=inp.ror-tg.ror;
+    if(d<-1.5)return {kind:"fire",dir:"up",reason:`[ROR ${(+inp.ror).toFixed(1)}] 偏低 ${(-d).toFixed(1)} 防 Crash → 火力上调 2 或风门下调 10`};
+    if(d>1.5) return {kind:"air",dir:"open",reason:`[ROR ${(+inp.ror).toFixed(1)}] 偏高 +${d.toFixed(1)} 防 Flick → 风门上调 10 或火力下调 2`};
+    return {kind:"ok",dir:"—",reason:`[ROR ${(+inp.ror).toFixed(1)}] 升温速率平稳（目标 ${tg.ror}），保持当前`};
+  }
+  if(k==="dev" && inp.dev!=null){
+    const d=inp.dev-tg.dev;
+    if(d<-2)return {kind:"process",dir:"—",reason:`[发展率 ${Math.round(inp.dev)}%] 偏低 ${Math.round(-d)}% → 延长发展时间，勿急下豆`};
+    if(d>2) return {kind:"process",dir:"—",reason:`[发展率 ${Math.round(inp.dev)}%] 偏高 +${Math.round(d)}% → 提前下豆避免过苦`};
+    return {kind:"ok",dir:"—",reason:`[发展率 ${Math.round(inp.dev)}%] 与目标 ${tg.dev}% 吻合，按计划推进`};
+  }
+  if(k==="stir" && inp.stir!=null){
+    const d=inp.stir-tg.stir;
+    if(d<-5)return {kind:"stir",dir:"up",reason:`[搅拌 ${Math.round(inp.stir)}] 偏低 ${Math.round(-d)} → 搅拌上调 ${Math.min(15,Math.ceil(-d/2))} 增强翻滚`};
+    if(d>5) return {kind:"stir",dir:"down",reason:`[搅拌 ${Math.round(inp.stir)}] 偏高 +${Math.round(d)} → 搅拌下调 ${Math.min(15,Math.ceil(d/2))} 防碎豆`};
+    return {kind:"ok",dir:"—",reason:`[搅拌 ${Math.round(inp.stir)}] 与目标 ${tg.stir} 吻合，保持当前转速`};
+  }
+  if(k==="target"){
+    const tv=m1Manual.target!=null?m1Manual.target:curP.targetBean;
+    return {kind:"ok",dir:"—",reason:`[目标豆温] 已调整为 ${Math.round(tv)}℃，到达该温度即下豆冷却`};
+  }
+  if(k==="fire" && inp.fire!=null){
+    const d=inp.fire-tg.fire;
+    if(d<-4)return {kind:"fire",dir:"up",reason:`[火力GAS ${Math.round(inp.fire)}] 低于曲线 ${Math.round(-d)} → 建议火力上调 ${Math.min(10,Math.ceil(-d/2))}`};
+    if(d>4) return {kind:"fire",dir:"down",reason:`[火力GAS ${Math.round(inp.fire)}] 高于曲线 +${Math.round(d)} → 建议火力下调 ${Math.min(10,Math.ceil(d/2))}`};
+    return {kind:"ok",dir:"—",reason:`[火力GAS ${Math.round(inp.fire)}] 符合当前阶段目标（${tg.fire}）`};
+  }
+  if(k==="air" && inp.air!=null){
+    const d=inp.air-tg.air;
+    if(d<-8)return {kind:"air",dir:"open",reason:`[风门AIR ${Math.round(inp.air)}] 低于曲线 ${Math.round(-d)} → 建议风门上调 ${Math.min(20,Math.ceil(-d/5)*5)}`};
+    if(d>8) return {kind:"air",dir:"close",reason:`[风门AIR ${Math.round(inp.air)}] 高于曲线 +${Math.round(d)} → 建议风门下调 ${Math.min(20,Math.ceil(d/5)*5)}`};
+    return {kind:"ok",dir:"—",reason:`[风门AIR ${Math.round(inp.air)}] 符合当前阶段目标（${tg.air}）`};
+  }
+  const all=advise(tg,inp);
+  return all[0]||{kind:"ok",dir:"—",reason:"各项读数与目标吻合，保持当前设置"};
+}
+function m1LiveAdvise(){
+  const stage=document.getElementById("m1LiveStage"),box=document.getElementById("m1LiveBody");
+  const hasManual=Object.keys(m1Manual).length>0 || m1KnobCustom.fire || m1KnobCustom.air;
+  if(!m1SimActive && !hasManual){
+    if(stage)stage.textContent="待机 · 入豆或调滑杆即刻分析";
+    const tr=document.getElementById("m1Trend");if(tr)tr.style.display="none";
+    return;
+  }
+  const tg=m1TargetsAt(simT),a=m1SingleLatestAdvice(tg,m1Inputs());
+  if(stage)stage.textContent=`${fmt(simT)} · ${tg.name} · 标 火${tg.fire}/风${tg.air}/搅${tg.stir}`;
+  renderM1Trend(tg);
+  if(!box)return;
+  const cls=a.kind==="fire"?(a.dir==="up"?"up":"down"):a.kind==="air"?"air":a.kind==="stir"?"stir":a.kind==="ok"?"ok":"";
+  const ic=a.kind==="fire"?"火":a.kind==="air"?"风":a.kind==="stir"?"搅":a.kind==="ok"?"✓":"策";
+  const head=a.kind==="ok"?"吻合":
+    a.kind==="fire"?`火力${a.dir==="up"?"↑上调":"↓下调"}`:
+    a.kind==="air"?`风门${a.dir==="open"?"↑开大":"↓关小"}`:
+    a.kind==="stir"?`搅拌${a.dir==="up"?"↑加快":"↓减慢"}`:"策略";
+  box.innerHTML=`<div class="lrow ${cls}"><span class="li">${ic}</span><span><b>${head}</b> · ${a.reason}</span></div>`;
+  const cntEl=document.getElementById("m1LiveCnt");
+  if(cntEl)cntEl.textContent="（最新一条）";
+}
+function m1LiveResetBox(){
+  const box=document.getElementById("m1LiveBody");
+  if(box)box.innerHTML='<div class="lempty">点「▶ 放豆/开始」显示每步火/风/搅趋势；拖滑杆录实机值给出精确修正。</div>';
+  const st=document.getElementById("m1LiveStage");if(st)st.textContent="待机 · 入豆后启用";
+  const cntEl=document.getElementById("m1LiveCnt");if(cntEl)cntEl.textContent="";
+  const tr=document.getElementById("m1Trend");if(tr)tr.style.display="none";
+}
+function m1UpdateHint(){
+  document.querySelectorAll(".m1-ev.blink,.m1-acts button.blink").forEach(e=>e.classList.remove("blink"));
+  const startBtn=document.getElementById("m1StartBtn");
+  if(!m1SimActive){if(startBtn)startBtn.classList.add("blink");return;}
+  if(!m1Await)return;
+  const p=curP,ev=M1_EVENTS.find(e=>e.key===m1Await);
+  const el=document.getElementById("m1ev_"+m1Await);
+  if(el&&ev){el.classList.add("blink");el.title=`下一步：设备出现「${ev.label}」后点此确认（约 ${fmt(ev.at(p))}）`;}
+}
+function m1Mark(key){
+  if((key==="scS"||key==="scE")&&!needSecondCrack())return;
+  const p=curP;
+  const ev=M1_EVENTS.find(e=>e.key===key);
+  const lbl=ev?ev.label:key;
+  const actualSec=Math.round(simT);
+  m1Marks[key]=actualSec;
+  m1Confirmed[key]=true;
+  const el=document.getElementById("m1ev_"+key);
+  if(el){el.classList.add("on");el.classList.remove("blink");const tm=el.querySelector(".tm");if(tm)tm.textContent=fmt(actualSec);}
+  m1Await=m1CalcAwait();
+  const nx=m1Await?M1_EVENTS.find(e=>e.key===m1Await):null;
+  toast(`已记录「${lbl}」实际时间 ${fmt(actualSec)}${nx?` · 下一步「${nx.label}」闪烁`:" · 全部节点已确认"}`);
+  refreshM1(simT,0,0,Math.round(BT(simT)),etAt(simT),rorAt(simT),devRateAt(simT));
+  m1UpdateHint();m1LiveAdvise();
+}
+function m1SetMode(m){
+  document.getElementById("m1modeManual").classList.toggle("on",m==="manual");
+  document.getElementById("m1modeAuto").classList.toggle("on",m==="auto");
+  toast(m==="auto"?"自动烘焙模式":"手动烘焙模式");
+}
+function m1Step(kind,d){
+  const id=kind==="fire"?"m1Fire":kind==="air"?"m1Air":"m1Tgt";
+  const el=document.getElementById(id);let v=+el.value||0;
+  v=clamp(v+d,kind==="target"?80:0,kind==="target"?250:100);
+  el.value=v;
+  m1LastKey=kind;
+  if(kind==="target"){m1Manual.target=v;m1KnobCustom.target=true;const c=document.getElementById("cardTarget");if(c)c.classList.add("overridden");refreshM1(simT,0,0,Math.round(BT(simT)),etAt(simT),rorAt(simT),devRateAt(simT));toast("目标豆温设为 "+v+"℃");}
+  else{m1KnobCustom[kind]=true;toast((kind==="fire"?"火力值 ":"风门值 ")+("设为 "+v));}
+  m1LiveAdvise();
+}
+function m1Pause(){toast("火力暂停");if(simRun)stopSim();}
+
+function m1StartRoast(){
+  m1Marks={};m1Manual={};m1Trace=[];m1SimActive=true;m1KnobCustom={fire:false,air:false,target:false};
+  m1Confirmed={charge:true};
+  m1Await=m1CalcAwait();
+  document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
+  renderM1Events();
+  if(simT>=curP.drop[0])simT=0;
+  startSim();
+  m1UpdateHint();
+  toast("放豆成功：总计时已启动 → 回温点闪烁");
+  m1LiveAdvise();
+}
+function m1Drop(){
+  const p=curP;
+  m1Marks.drop=simT<10?p.drop[0]:Math.round(simT);
+  m1Confirmed.drop=true;m1Await=m1CalcAwait();
+  m1SimActive=false;
+  resetSim();
+  const lbl=document.getElementById("m1ev_drop");if(lbl){lbl.classList.add("on");lbl.classList.remove("blink");const tm=lbl.querySelector(".tm");if(tm)tm.textContent=fmt(m1Marks.drop);}
+  refreshM1(0,0,0,Math.round(BT(0)),etAt(0),rorAt(0),0);
+  m1LiveResetBox();
+  document.querySelectorAll(".m1-ev.blink,.m1-acts button.blink").forEach(e=>e.classList.remove("blink"));
+  toast("下豆冷却：记录于 "+fmt(m1Marks.drop));
+}
+function fallbackCopy(txt){
+  const ta=document.createElement("textarea");
+  ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand("copy");toast("已复制到剪贴板");}
+  catch(e){toast("复制失败，请手动选择");}
+  ta.remove();
+}
+
+const CURVE_HIST_KEY="coffeeRoastSavedCurves_v1";
+let _memCurveHist=[];
+function loadCurveHist(){
+  try{
+    const raw=localStorage.getItem(CURVE_HIST_KEY);
+    if(raw){_memCurveHist=JSON.parse(raw);return _memCurveHist;}
+  }catch(e){}
+  return _memCurveHist;
+}
+function saveCurveHist(arr){
+  _memCurveHist=arr;
+  try{localStorage.setItem(CURVE_HIST_KEY,JSON.stringify(arr));return true;}
+  catch(e){return false;}
+}
+function formatCurveText(rec){
+  const marksTxt=rec.marks&&Object.keys(rec.marks).length
+    ?Object.keys(rec.marks).map(k=>{
+      const ev=M1_EVENTS.find(e=>e.key===k);
+      return (ev?ev.label:k)+" "+fmt(rec.marks[k]);
+    }).join(" · ")
+    :"无";
+  return `【狙击手M1 · ${rec.beanName}】${rec.grams}g（${rec.modeLabel}）\n`+
+    `保存时间 ${new Date(rec.savedAt).toLocaleString("zh-CN")} | 停止时刻 ${fmt(rec.stopT)}\n`+
+    `目标豆温 ${rec.targetBean}℃ | 总时长 ${fmt(rec.totalSec)}\n`+
+    `注入 00:00 · 回温 ${rec.turnText} · 转黄 ${rec.yellowText}\n`+
+    `一爆 ${rec.fcText} → 结束 ${rec.fcEndText}（计时 ${rec.fcTimerText}）\n`+
+    (rec.scText?`二爆 ${rec.scText} → 结束 ${rec.scEndText}（计时 ${rec.scTimerText}）\n`:"")+
+    `下豆 ${rec.dropText} | 发展率 ${rec.dtr}%\n`+
+    `实际标注：${marksTxt}`;
+}
+function renderCurveHist(){
+  const list=loadCurveHist();
+  const cnt=document.getElementById("m1HistCnt");if(cnt)cnt.textContent=list.length;
+  const box=document.getElementById("m1HistList");if(!box)return;
+  if(!list.length){
+    box.innerHTML='<div class="hempty">暂无保存的曲线记录，点「保存曲线」即可存入本地。</div>';
+    return;
+  }
+  box.innerHTML=list.map(r=>{
+    const mCount=r.marks?Object.keys(r.marks).length:0;
+    const dropVal=r.dropText.split("/")[1]||r.dropText;
+    const tmStr=new Date(r.savedAt).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
+    const isLoaded=m1LoadedId===r.id;
+    const loadBtn=isLoaded
+      ?`<button type="button" style="background:var(--cinnabar);border-color:var(--cinnabar);color:#fff;font-weight:600" onclick="m1UnloadCurve()">取消加载</button>`
+      :`<button type="button" style="border-color:var(--gold);color:#ffd479" onclick="loadCurveHistById('${r.id}')">加载</button>`;
+    return `<div class="hrow" style="${isLoaded?"border-color:var(--gold);background:#302b22":""}"><div class="hinfo">${isLoaded?'<span style="color:#7fd1a8;font-weight:700">[当前] </span>':''}<b>${r.beanName}</b> · ${r.grams}g · ${r.modeLabel} · 下豆${dropVal} · 标注${mCount}个 <span style="color:#9a9182">(${tmStr})</span></div>`+
+      `<div class="hbtns">${loadBtn}`+
+      `<button type="button" onclick="openCurveHistDetail('${r.id}')">查看</button>`+
+      `<button type="button" onclick="copyCurveHistById('${r.id}')">复制</button>`+
+      `<button type="button" onclick="deleteCurveHistById('${r.id}')">删</button></div></div>`;
+  }).join("");
+}
+function openCurveHistDetail(id){
+  const r=loadCurveHist().find(x=>x.id===id);
+  if(!r)return;
+  const markItems=r.marks&&Object.keys(r.marks).length
+    ?Object.keys(r.marks).map(k=>{
+      const ev=M1_EVENTS.find(e=>e.key===k);
+      return `<tr><td class="k">${ev?ev.label:k}</td><td>${fmt(r.marks[k])}</td></tr>`;
+    }).join("")
+    :'<tr><td colspan="2" class="hint">未手动标注事件</td></tr>';
+  const tracePts=r.trace&&r.trace.length
+    ?r.trace.filter((_,idx)=>idx%Math.max(1,Math.floor(r.trace.length/12))===0).map(pt=>
+      `<tr><td class="k">${fmt(pt.t)}</td><td>豆 ${Math.round(pt.bt)}℃ / 风 ${Math.round(pt.et)}℃</td><td>ROR ${(+pt.ror).toFixed(1)}</td></tr>`
+    ).join("")
+    :'<tr><td colspan="3" class="hint">无实机滑杆打点轨迹</td></tr>';
+  document.getElementById("curveHistBody").innerHTML=`
+    <span class="x" onclick="closeCurveHistModal()">×</span>
+    <h3>保存的曲线记录</h3><div class="en">SAVED ROAST CURVE · ${r.beanName}</div>
+    <div class="advice"><b>${r.beanName}</b> · <b>${r.grams}g</b> · <b>${r.modeLabel}</b><br>
+      <span class="hint">保存时间：${new Date(r.savedAt).toLocaleString("zh-CN")} · 记录时刻：${fmt(r.stopT)}</span></div>
+    <div class="hint" style="margin:8px 0 4px">核心节点参数：</div>
+    <table class="mini">
+      <tr><th style="width:32%">节点</th><th>记录/目标</th></tr>
+      <tr><td class="k">目标豆温 / 总时长</td><td>${r.targetBean}℃ / ${fmt(r.totalSec)}</td></tr>
+      <tr><td class="k">回温点</td><td>${r.turnText}</td></tr>
+      <tr><td class="k">转黄</td><td>${r.yellowText}</td></tr>
+      <tr><td class="k">一爆开始 → 结束</td><td>${r.fcText} → ${r.fcEndText}（${r.fcTimerText}）</td></tr>
+      ${r.scText?`<tr><td class="k">二爆开始 → 结束</td><td>${r.scText} → ${r.scEndText}（${r.scTimerText}）</td></tr>`:""}
+      <tr><td class="k">下豆 / 发展率</td><td>${r.dropText} · ${r.dtr}%</td></tr>
+    </table>
+    <div class="hint" style="margin:8px 0 4px">事件标注记录：</div>
+    <table class="mini"><tr><th style="width:32%">事件</th><th>时刻</th></tr>${markItems}</table>
+    <div class="hint" style="margin:8px 0 4px">实机滑杆采样轨迹：</div>
+    <table class="mini"><tr><th>时刻</th><th>豆温/风温</th><th>ROR</th></tr>${tracePts}</table>
+    <div class="modal-btns">
+      <button type="button" class="go" style="background:var(--green)" onclick="loadCurveHistById('${r.id}');closeCurveHistModal()">加载到模拟器</button>
+      <button type="button" class="go ghost" onclick="copyCurveHistById('${r.id}')">复制记录</button>
+    </div>`;
+  document.getElementById("curveHistMask").classList.add("show");
+}
+function closeCurveHistModal(){document.getElementById("curveHistMask").classList.remove("show");}
+document.getElementById("curveHistMask").addEventListener("click",e=>{if(e.target.id==="curveHistMask")closeCurveHistModal();});
+function copyCurveHistById(id){
+  const r=loadCurveHist().find(x=>x.id===id);
+  if(!r)return;
+  const txt=formatCurveText(r);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast("已复制该条曲线记录")).catch(()=>fallbackCopy(txt));
+  }else fallbackCopy(txt);
+}
+function deleteCurveHistById(id){
+  const next=loadCurveHist().filter(x=>x.id!==id);
+  saveCurveHist(next);renderCurveHist();toast("已删除该条曲线记录");
+}
+function loadCurveHistById(id){
+  const r=loadCurveHist().find(x=>x.id===id);
+  if(!r){toast("未找到该条曲线记录");return;}
+  stopSim();
+  const matchedBean=BEANS.find(b=>b.id===r.beanId)||BEANS.find(b=>b.name===r.beanName);
+  if(matchedBean)curBean=matchedBean;
+  if([50,100,200].includes(+r.grams)){
+    curG=+r.grams;
+    document.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on",+b.dataset.g===curG));
+  }
+  const modeMap={"浅烘":"light","中烘":"medium","深烘":"dark"};
+  if(r.modeLabel&&modeMap[r.modeLabel]){
+    roastMode=modeMap[r.modeLabel];
+    const msel=document.getElementById("roastMode");if(msel)msel.value=roastMode;
+  }
+  buildP();
+  if(r.targetBean)curP.targetBean=+r.targetBean;
+  makeBT();
+
+  m1Marks=Object.assign({},r.marks||{});
+  m1Confirmed={};
+  Object.keys(m1Marks).forEach(k=>{m1Confirmed[k]=true;});
+  m1Await=m1CalcAwait();
+  m1Trace=Array.isArray(r.trace)?r.trace.map(pt=>Object.assign({},pt)):[];
+  m1Manual={};
+  m1KnobCustom={fire:false,air:false,target:false};
+  document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
+
+  if(m1Trace.length){
+    const lastPt=m1Trace[m1Trace.length-1];
+    if(lastPt.bt!=null){m1Manual.bt=lastPt.bt;const c=document.getElementById("cardBt");if(c)c.classList.add("overridden");}
+    if(lastPt.et!=null){m1Manual.et=lastPt.et;const c=document.getElementById("cardEt");if(c)c.classList.add("overridden");}
+    if(lastPt.ror!=null){m1Manual.ror=lastPt.ror;const c=document.getElementById("cardRor");if(c)c.classList.add("overridden");}
+    if(lastPt.stir!=null){m1Manual.stir=lastPt.stir;const c=document.getElementById("cardStir");if(c)c.classList.add("overridden");}
+  }
+  if(r.targetBean){
+    m1Manual.target=+r.targetBean;
+    const ct=document.getElementById("cardTarget");if(ct)ct.classList.add("overridden");
+  }
+
+  simT=clamp(+r.stopT||0,0,curP.drop[0]);
+  m1SimActive=true;
+  m1LoadedId=r.id;
+  m1LastKey=m1Trace.length?"bt":null;
+  updateLoadedUi(r.beanName);
+  renderCurveHist();
+  renderBeans();
+  renderM1Events();
+  refreshAll();
+  m1LiveAdvise();
+  const panel=document.getElementById("m1Panel");
+  if(panel)panel.scrollIntoView({behavior:"smooth",block:"start"});
+  toast(`已加载「${r.beanName} · ${r.grams}g · ${r.modeLabel}」，点「取消加载」或「复位」可清除`);
+}
+function updateLoadedUi(beanName){
+  const btn=document.getElementById("m1UnloadBtn");
+  const badge=document.getElementById("m1LoadedBadge");
+  if(m1LoadedId){
+    if(btn)btn.style.display="inline-block";
+    if(badge){badge.style.display="inline";badge.textContent=`[已加载: ${beanName||"历史曲线"}]`;}
+  }else{
+    if(btn)btn.style.display="none";
+    if(badge){badge.style.display="none";badge.textContent="";}
+  }
+}
+function m1UnloadCurve(){
+  m1Reset();
+  toast("已清除加载的历史曲线，面板已恢复默认");
+}
+function m1ClearHist(){
+  if(!loadCurveHist().length){toast("暂无曲线记录可清空");return;}
+  saveCurveHist([]);renderCurveHist();toast("已清空全部保存的曲线记录");
+}
+function m1Save(){
+  const p=curP;
+  const rec={
+    id:"cv_"+Date.now()+"_"+Math.random().toString(36).slice(2,6),
+    savedAt:Date.now(),
+    stopT:Math.round(simT),
+    beanId:curBean.id,
+    beanName:curBean.name,
+    grams:curG,
+    modeLabel:modeName(),
+    targetBean:p.targetBean,
+    totalSec:p.drop[0],
+    turnText:`${fmt(p.turn[0])}/${p.turn[1]}℃`,
+    yellowText:`${fmt(p.yellow[0])}/${p.yellow[1]}℃`,
+    fcText:`${fmt(p.fc[0])}/${p.fc[1]}℃`,
+    fcEndText:`${fmt(p.fcEnd[0])}/${p.fcEnd[1]}℃`,
+    fcTimerText:fmt(p.fcTimer),
+    scText:needSecondCrack()?`${fmt(p.scStart[0])}/${p.scStart[1]}℃`:"",
+    scEndText:needSecondCrack()?`${fmt(p.scEnd[0])}/${p.scEnd[1]}℃`:"",
+    scTimerText:needSecondCrack()?fmt(p.scTimer):"",
+    dropText:`${fmt(p.drop[0])}/${p.drop[1]}℃`,
+    dtr:p.dtr,
+    marks:Object.assign({},m1Marks),
+    trace:m1Trace.slice(-60)
+  };
+  const hist=loadCurveHist();
+  hist.unshift(rec);
+  if(hist.length>30)hist.length=30;
+  saveCurveHist(hist);
+  renderCurveHist();
+
+  const txt=formatCurveText(rec);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast("已保存曲线记录并复制到剪贴板")).catch(()=>fallbackCopy(txt));
+  }else fallbackCopy(txt);
+}
+function m1Reset(){
+  stopSim();simT=0;m1Marks={};m1Manual={};m1Trace=[];m1SimActive=false;m1KnobCustom={fire:false,air:false,target:false};
+  m1Confirmed={};m1Await=null;m1LastKey=null;m1LoadedId=null;
+  updateLoadedUi("");
+  renderCurveHist();
+  document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
+  document.querySelectorAll(".m1-ev.blink,.m1-acts button.blink").forEach(e=>e.classList.remove("blink"));
+  renderM1Events();refreshDash();drawChart();m1LiveResetBox();
+  toast("面板已复位");
+}
+
+function refreshTable(){
+  const b=curBean,p=curP,cal=loadCalib()[b.id];
+  const rows=[["入豆温度","charge","℃"],["回温点","turn","时间/℃"],
+    ["黄化点","yellow","时间/℃"],["一爆","fc","时间/℃"],["下豆","drop","时间/℃"],
+    ["发展时间","dev","mm:ss"],["DTR","dtr","%"],["Agtron 豆","ag","—"],
+    ["建议失重","wl","%"],["入豆火力","p0","0-100"],["黄化火力","pY","0-100"],["一爆火力","pF","0-100"]];
+  const sizes=[50,100,200].map(g=>{
+    const pp=scaleProfile(getBase(b),g);
+    return {g,p:pp,p0:pp.power[0][1],pY:Math.round(interp(pp.power,pp.yellow[0])),
+      pF:Math.round(interp(pp.power,pp.fc[0])),wl:g===200?14:g===100?13.5:13,
+      ag:(cal&&cal.ag)||b.ag+(g===200?0:g===100?0:1)};
+  });
+  const get=(d,k)=>({charge:d.p.charge,turn:fmt(d.p.turn[0])+"/"+d.p.turn[1],
+    yellow:fmt(d.p.yellow[0])+"/"+d.p.yellow[1],fc:fmt(d.p.fc[0])+"/"+d.p.fc[1],
+    drop:fmt(d.p.drop[0])+"/"+d.p.drop[1],dev:fmt(d.p.dev),dtr:d.p.dtr+"%",
+    ag:d.ag,wl:d.wl+"%",p0:d.p0,pY:d.pY+"",pF:d.pF+""}[k]);
+  let h=`<tr><th style="width:28%">参数</th>${sizes.map(d=>`<th>${d.g}g${d.g===curG?"●":""}</th>`).join("")}</tr>`;
+  rows.forEach(([label,key])=>{
+    h+=`<tr><td class="k">${label}</td>`;
+    sizes.forEach(d=>{h+=`<td class="${d.g===curG?"hl":""}">${get(d,key)}</td>`;});
+    h+=`</tr>`;
+  });
+  document.getElementById("paramTable").innerHTML=h;
+  document.getElementById("paramTitle").innerHTML=
+    `当前：<b style="color:var(--cinnabar)">${b.name}</b> · ${b.process} · ${b.level} · Agtron ${(cal&&cal.ag)||b.ag}`+
+    (cal?` · <b class="ok">已校准</b>`:"");
+  const nr=[
+    ["放豆入炉","00:00",`风温${p.charge}℃ · 火${p.power[0][1]}/风${p.air[0][1]}`,"稳定2分钟后一次性投豆，计时归零。"],
+    ["回温点",fmt(p.turn[0]),`豆温 ${p.turn[1]}℃ · 风温 ${etAt(p.turn[0])}℃`,"偏高→降入豆温；偏低→提高预热。"],
+    ["转黄",fmt(p.yellow[0]),`豆温 ${p.yellow[1]}℃ · 火${Math.round(interp(p.power,p.yellow[0]))}`,"青转黄闻面包香，开始逐步收火。"],
+    ["一爆开始",fmt(p.fc[0]),`豆温 ${p.fc[1]}℃ · 发展率 0%`,"发展计时起点，再降火、开大风力。"],
+    ["一爆结束",fmt(p.fcEnd[0]),`豆温 ${p.fcEnd[1]}℃ · 计时 ${fmt(p.fcTimer)}`,"爆裂转稀疏，进入发展期继续收火。"],
+    ...(needSecondCrack()?[
+      ["二爆开始","约"+fmt(p.scStart[0]),`豆温 ${p.scStart[1]}℃`,"深烘：允许进二爆初期，切忌过头。"],
+      ["二爆结束","约"+fmt(p.scEnd[0]),`计时约 ${fmt(p.scTimer)}`,"风味转向苦甜厚重。"]
+    ]:[]),
+    ["下豆冷却",fmt(p.drop[0]),`豆温 ${p.drop[1]}℃ · 发展率 ${p.dtr}%`,
+     needSecondCrack()?"快速摊薄冷却，记录失重与色值。":"浅/中烘不进二爆，快速摊薄冷却并记录。"]
+  ];
+  let nh=`<tr><th style="width:18%">节点</th><th style="width:16%">时间</th><th style="width:32%">目标</th><th>要点</th></tr>`;
+  nr.forEach(r=>{nh+=`<tr>${r.map((c,i)=>`<td class="${i===0?"k":""}">${c}</td>`).join("")}</tr>`;});
+  document.getElementById("nodeTable").innerHTML=nh;
+}
+
+function refreshDiag(){
+  const b=curBean,p=curP;
+  document.getElementById("preheatVal").textContent=p.charge+" ℃";
+  document.getElementById("preheatSub").textContent=`${curG}g 投豆量 · ${b.level} · 预热到位后稳定 2 分钟`;
+  let idealDTR=b.level.includes("深")?20:b.level.includes("浅中")?16:b.level.includes("浅")?15:
+                b.level.includes("中深")?20:16;
+  const diff=Math.abs(p.dtr-idealDTR),score=Math.max(60,100-diff*5);
+  const num=document.getElementById("scoreNum");num.textContent=score;
+  num.className="num"+(score>=85?"":score>=72?" mid":" bad");
+  document.getElementById("scoreTxt").textContent=
+    `DTR ${p.dtr}% · 理想约 ${idealDTR}% · ${score>=85?"匹配良好":score>=72?"可接受，可微调":"偏离较大"}`;
+  const items=[
+    ["ROR 落点",`下豆前 ROR ${rorAt(p.drop[0]-5).toFixed(1)} ℃/min。浅焙建议 ≥5，过低易发展冻结（Crash）。`],
+    ["发展占比",`发展 ${fmt(p.dev)}，DTR ${p.dtr}%。${p.dtr>idealDTR+3?"偏长，可能发苦":"偏短，可能发青"}。`],
+    ["风力策略",`${b.process==="日晒"||b.process==="湿刨"||b.process==="半水洗"?"日晒/湿刨豆风力偏开 60–100，防发酵闷味":"水洗豆风力 50–90，保持干净度"}。`],
+    ["入豆温度",`${p.charge}℃，${curG}g 投豆。小批量入豆温度须下调，否则机器热容比过大易焦尖。`]
+  ];
+  document.getElementById("diagList").innerHTML=items.map(([h,bb])=>
+    `<div class="diag-item"><div class="h">${h}</div><div class="b">${bb}</div></div>`).join("");
+}
+function checkPreheat(){
+  const v=parseFloat(document.getElementById("curTemp").value),p=curP;
+  const el=document.getElementById("preheatResult");el.style.display="block";
+  if(isNaN(v)){el.textContent="请输入当前机温数值。";return;}
+  const d=v-p.charge;
+  if(d<-15)el.innerHTML=`<b class="warn">偏低 ${Math.abs(d)}℃</b>：继续预热，到位后稳定 2 分钟再投豆。`;
+  else if(d>15)el.innerHTML=`<b class="warn">偏高 ${d}℃</b>：过热易焦尖，可加大风力散热或等待回落至 ${p.charge}℃。`;
+  else el.innerHTML=`<b class="ok">合适</b>：当前机温与推荐入豆温度相差 ${d}℃，可以投豆。`;
+}
+const DEFECTS={
+  bitter:["苦涩 / 焦味 / 出油","原因：发展过长、DTR 过高、下豆温度过高或尾段火力回马枪（Flick）。<br>对策：提前 20–30 秒下豆；降低一爆后火力；缩短发展 15 秒。浅焙瑰夏尤其忌进二爆。"],
+  sour:["尖酸 / 青涩 / 咸味","原因：发展不足、一爆后太早下豆、梅拉德反应不充分。<br>对策：延长发展 15–30 秒；提高黄化段火力；确认一爆已充分展开再计时。"],
+  flat:["风味平淡 / 甜感不足","原因：整体焙度过浅或过深、失重不足、生豆品质问题。<br>对策：对照 Agtron 目标调整下豆点；确保失重 13–16%；先排查生豆。"],
+  smoky:["烟熏味 / 闷味","原因：风力太小排烟不畅、火力过猛产生烟、银皮未清。<br>对策：风力值上调 10–20；降低入豆火力；清理银皮与排烟道。"],
+  uneven:["发展不匀 / 花豆","原因：投豆量超出机器负荷、滚筒蓄热不均、火力波动大。<br>对策：减量至额定容量的 60–80%；延长预热稳定时间；一次只微调一个变量。"],
+  ror:["ROR 异常","Crash（骤降）：发展冻结、风味扁平 → 提前补火或降低前段火力让曲线更平缓。<br>Flick（回升）：尾段焦苦尖酸 → 提前收火、不要在后段加大火力。"]
+};
+function showDefect(){
+  const v=document.getElementById("defect").value,el=document.getElementById("defectBox");
+  if(!v){el.textContent="选择上方问题，系统给出原因与调整建议。";return;}
+  el.innerHTML=`<b style="color:var(--cinnabar)">${DEFECTS[v][0]}</b><br><br>${DEFECTS[v][1]}`;
+}
+
+/* 兼容 requestAnimationFrame 与 setInterval 双驱动计时器，确保任何 WebView 环境下时间均稳定走动 */
+function toggleSim(){simRun?stopSim():startSim();}
+let _m1AdvSec=-1,_simInterval=null,_simLastEpochMs=0;
+function _nowMs(){return Date.now();}
+function _advanceClockByDelta(dtSec){
+  if(!simRun||!curP)return;
+  const maxT=Math.max(10,curP.drop[0]);
+  simT=Math.min(maxT,simT+Math.max(0,dtSec));
+  autoMarkEvents();
+  refreshDash();
+  drawChart();
+  const sec=Math.floor(simT);
+  if(sec!==_m1AdvSec){_m1AdvSec=sec;m1LiveAdvise();}
+  if(simT>=maxT){stopSim();}
+}
+function startSim(){
+  if(!curP){buildP();makeBT();}
+  if(simT>=curP.drop[0])simT=0;
+  stopSim();
+  m1SimActive=true;
+  simRun=true;
+  const btn=document.getElementById("simBtn");if(btn)btn.textContent="⏸ 暂停";
+  const stBtn=document.getElementById("m1StartBtn");if(stBtn)stBtn.textContent="⏸ 计时中";
+  _simLastEpochMs=_nowMs();
+  refreshDash();
+
+  const rafStep=()=>{
+    if(!simRun)return;
+    const now=_nowMs();
+    const dt=(now-_simLastEpochMs)/1000;
+    if(dt>=0.05){
+      _simLastEpochMs=now;
+      _advanceClockByDelta(dt);
+    }
+    if(simRun)simRAF=requestAnimationFrame(rafStep);
+  };
+  simRAF=requestAnimationFrame(rafStep);
+
+  _simInterval=setInterval(()=>{
+    if(!simRun)return;
+    const now=_nowMs();
+    const dt=(now-_simLastEpochMs)/1000;
+    if(dt>=0.2){
+      _simLastEpochMs=now;
+      _advanceClockByDelta(dt);
+    }
+  },250);
+}
+function stopSim(){
+  simRun=false;
+  if(simRAF){cancelAnimationFrame(simRAF);simRAF=null;}
+  if(_simInterval){clearInterval(_simInterval);_simInterval=null;}
+  const b=document.getElementById("simBtn");if(b)b.textContent="▶ 模拟烘焙";
+  const sb=document.getElementById("m1StartBtn");if(sb)sb.textContent="▶ 放豆/开始";
+}
+function resetSim(){stopSim();simT=0;_m1AdvSec=-1;refreshDash();drawChart();}
+function onScrub(v){stopSim();simT=(+v/100)*Math.max(1,curP.drop[0]);autoMarkEvents();refreshDash();drawChart();m1LiveAdvise();}
+
+function surveyDefault(){return {aroma:"",acidity:"",sweet:"",body:"",defects:[],sat:0,
+  agActual:"",dropActual:"",devActual:"",wlActual:"",applyVariety:false};}
+function openSurvey(){
+  wizSurvey=surveyDefault();renderSurvey();
+  document.getElementById("surveyMask").classList.add("show");
+}
+function closeSurvey(){document.getElementById("surveyMask").classList.remove("show");}
+document.getElementById("surveyMask").addEventListener("click",e=>{if(e.target.id==="surveyMask")closeSurvey();});
+function collectSurveyInputs(){
+  ["agActual","dropActual","devActual","wlActual"].forEach(k=>{
+    const el=document.getElementById("sv_"+k);if(el)wizSurvey[k]=el.value;});
+  const c=document.getElementById("sv_applyVariety");if(c)wizSurvey.applyVariety=c.checked;
+}
+function rateSet(g,v){wizSurvey[g]=v;renderSurvey();}
+function defectToggle(v){
+  const i=wizSurvey.defects.indexOf(v);
+  if(i>=0)wizSurvey.defects.splice(i,1);else wizSurvey.defects.push(v);
+  renderSurvey();
+}
+function renderSurvey(){
+  collectSurveyInputs();
+  const b=curBean;
+  const q=(title,group,opts)=>`<div class="survey-row"><div class="q">${title}</div><div class="rate">${
+    opts.map(([v,l])=>`<button type="button" class="${wizSurvey[group]===v?"on":""}" onclick="rateSet('${group}','${v}')">${l}</button>`).join("")
+  }</div></div>`;
+  const defects=[["bitter","苦涩焦味"],["sour","尖酸青涩"],["smoky","烟熏发酵"],
+    ["flat","平淡"],["uneven","不匀花豆"],["none","无瑕疵"]];
+  document.getElementById("surveyBody").innerHTML=`
+    <span class="x" onclick="closeSurvey()">×</span>
+    <h3>烘后调查问卷</h3><div class="en">POST-ROAST REVIEW · ${b.name}</div>
+    <div class="note">根据这锅的实际表现作答，系统会修正「${b.name}」的基准参数并保存，三档同步重算。</div>
+    ${q("① 香气表现","aroma",[["weak","弱 / 不明显"],["ok","合适"],["strong","奔放 / 充足"]])}
+    ${q("② 酸质表现","acidity",[["sharp","尖酸刺激"],["bright","明亮合适"],["low","酸不足"]])}
+    ${q("③ 甜感表现","sweet",[["low","甜感不足"],["ok","合适"],["cloying","甜腻 / 过熟"]])}
+    ${q("④ 醇厚 Body","body",[["thin","单薄"],["ok","合适"],["heavy","过重"]])}
+    <div class="survey-row"><div class="q">⑤ 瑕疵（可多选）</div><div class="chk">${
+      defects.map(([v,l])=>`<label class="${wizSurvey.defects.includes(v)?"on":""}" onclick="defectToggle('${v}')">${l}</label>`).join("")
+    }</div></div>
+    <div class="survey-row"><div class="q">⑥ 整体满意度</div><div class="rate">${
+      [1,2,3,4,5].map(n=>`<button type="button" class="${wizSurvey.sat===n?"on":""}" onclick="rateSet('sat',${n})">${n} 星</button>`).join("")
+    }</div></div>
+    <div class="survey-row"><div class="q">⑦ 实测数据（选填）</div>
+      <div class="survey-grid">
+        <div class="fld"><label>实测 Agtron 豆</label><input type="number" id="sv_agActual" placeholder="如 67" value="${wizSurvey.agActual}"></div>
+        <div class="fld"><label>实测下豆温度 ℃</label><input type="number" id="sv_dropActual" placeholder="如 205" value="${wizSurvey.dropActual}"></div>
+        <div class="fld"><label>实测发展（秒）</label><input type="number" id="sv_devActual" placeholder="如 80" value="${wizSurvey.devActual}"></div>
+        <div class="fld"><label>实测失重 %</label><input type="number" id="sv_wlActual" placeholder="如 14" value="${wizSurvey.wlActual}"></div>
+      </div></div>
+    <div class="survey-row"><label style="font-size:13px;color:var(--coffee);display:flex;align-items:center;gap:8px"><input type="checkbox" style="width:18px;height:18px;accent-color:var(--cinnabar)" id="sv_applyVariety" ${wizSurvey.applyVariety?"checked":""}> 同步应用到同品种「${b.variety}」</label></div>
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:8px;margin-top:16px">
+      <button type="button" class="btn green" onclick="submitSurvey()">提交并保存参数</button>
+      <button type="button" class="btn ghost" onclick="closeSurvey()">暂不提交</button>
+    </div>`;
+}
+function calcAdjust(q,b){
+  const a={charge:0,turnT:0,yellowT:0,fcT:0,dropT:0,power:0,air:0,dev:0,ag:0};
+  const has=d=>q.defects.includes(d)&&!q.defects.includes("none");
+  if(has("bitter")){a.dropT-=3;a.fcT-=1;a.dev-=10;a.power-=3;a.ag+=2;}
+  if(has("sour")){a.dropT+=3;a.yellowT+=2;a.dev+=15;a.power+=3;a.ag-=2;}
+  if(has("smoky")){a.air+=10;a.power-=2;}
+  if(has("flat")){a.dev+=10;a.dropT+=2;}
+  if(has("uneven")){a.charge-=2;a.power-=1;}
+  if(q.acidity==="sharp"){a.dropT+=2;a.dev+=10;}
+  if(q.acidity==="low"){a.dropT-=2;a.ag+=1;}
+  if(q.sweet==="low"){a.dev+=10;a.dropT+=2;}
+  if(q.sweet==="cloying"){a.dropT-=2;a.dev-=5;}
+  if(q.body==="thin"){a.dropT+=2;a.dev+=8;}
+  if(q.body==="heavy"){a.dropT-=2;}
+  if(q.aroma==="weak"){a.dropT-=1;a.ag+=1;}
+  const agT=(loadCalib()[b.id]&&loadCalib()[b.id].ag)||b.ag;
+  if(q.agActual){const d=agT-(+q.agActual);a.ag+=clamp(Math.round(d*0.5),-4,4);}
+  if(q.dropActual){const d=b.base.drop[1]-(+q.dropActual);a.dropT+=clamp(Math.round(d*0.5),-5,5);}
+  if(q.devActual){const d=(+q.devActual)-(b.base.drop[0]-b.base.fc[0]);a.dev+=clamp(Math.round(d*0.4),-20,20);}
+  const k=q.sat>=4?0.5:q.sat<=2?1.3:1;
+  Object.keys(a).forEach(key=>{a[key]=Math.round(a[key]*k);});
+  a.charge=clamp(a.charge,-12,12);a.turnT=clamp(a.turnT,-6,6);
+  a.yellowT=clamp(a.yellowT,-6,6);a.fcT=clamp(a.fcT,-6,6);a.dropT=clamp(a.dropT,-8,8);
+  a.power=clamp(a.power,-6,6);a.air=clamp(a.air,-20,20);a.dev=clamp(a.dev,-30,30);
+  a.ag=clamp(a.ag,-5,5);
+  return a;
+}
+function applyAdj(base,a){
+  const b=JSON.parse(JSON.stringify(base));
+  b.charge=clamp(b.charge+(a.charge||0),150,240);
+  b.turn[1]+=a.turnT||0;b.yellow[1]+=a.yellowT||0;b.fc[1]+=a.fcT||0;b.drop[1]+=a.dropT||0;
+  b.drop[0]+=a.dev||0;
+  if(a.power)b.power=b.power.map(([t,v],i)=>[t,clamp(Math.round(v+a.power*(i>=2?1:i===1?0.5:0)),5,100)]);
+  if(a.air)b.air=b.air.map(([t,v])=>[t,clamp(Math.round(v+a.air),0,100)]);
+  return b;
+}
+function describeAdj(a){
+  const p=[];
+  if(a.charge)p.push(`入豆 ${a.charge>0?"+":""}${a.charge}℃`);
+  if(a.dropT)p.push(`下豆 ${a.dropT>0?"+":""}${a.dropT}℃`);
+  if(a.dev)p.push(`发展 ${a.dev>0?"+":""}${a.dev}秒`);
+  if(a.power)p.push(`火力 ${a.power>0?"+":""}${a.power}`);
+  if(a.air)p.push(`风力 ${a.air>0?"+":""}${a.air}`);
+  if(a.ag)p.push(`Agtron ${a.ag>0?"+":""}${a.ag}`);
+  return p.length?p.join(" · "):"参数已记录，保持当前基准";
+}
+function submitSurvey(){
+  collectSurveyInputs();
+  const b=curBean,cal=loadCalib(),prev=cal[b.id];
+  const adj=calcAdjust(wizSurvey,b);
+  const newAg=clamp(((prev&&prev.ag)||b.ag)+adj.ag,35,80);
+  const note=describeAdj(adj);
+  const rec={adj,ag:newAg,sessions:(prev&&prev.sessions||0)+1,lastAt:Date.now(),note,
+    sat:wizSurvey.sat,size:curG};
+  cal[b.id]=rec;
+  if(wizSurvey.applyVariety){
+    BEANS.forEach(o=>{if(o.id!==b.id&&o.variety===b.variety)cal[o.id]=Object.assign({},rec);});
+  }
+  const ok=saveCalib(cal);
+  closeSurvey();buildP();makeBT();refreshAll();renderBeans();renderCalib();
+  toast(ok?`已保存校准：${note}`:"校准已应用");
+  setTimeout(()=>openCalibDetail(b.id),350);
+}
+
+function renderCalib(){
+  const cal=loadCalib(),ids=Object.keys(cal);
+  const el=document.getElementById("calibList");
+  if(!ids.length){el.innerHTML=`<div class="calib-empty">尚无校准记录。烘焙完成后点「烘后问卷」提交，校准会保存在此，下次选同种豆自动调用。</div>`;return;}
+  el.innerHTML=ids.map(id=>{
+    const b=BEANS.find(x=>x.id===id)||{name:id},c=cal[id];
+    return `<div class="calib-row"><div style="flex:1;min-width:0"><div class="nm">${b.name}</div>
+      <div class="ds">第 ${c.sessions||1} 次 · ${c.note||""}</div></div>
+      <div style="display:flex;gap:6px;flex:none"><button type="button" class="btn ghost sm" onclick="openCalibDetail('${id}')">查看</button>
+      <button type="button" class="btn ghost sm" onclick="removeCalib('${id}')">删除</button></div></div>`;
+  }).join("");
+}
+function openCalibDetail(id){
+  const b=BEANS.find(x=>x.id===id),c=loadCalib()[id];
+  if(!b||!c)return;
+  const p200=scaleProfile(getBase(b),200),p100=scaleProfile(getBase(b),100),p50=scaleProfile(getBase(b),50);
+  document.getElementById("calibModalBody").innerHTML=`
+    <span class="x" onclick="closeCalibModal()">×</span>
+    <h3>${b.name} · 烘焙校准</h3><div class="en">CALIBRATION PROFILE</div>
+    <div class="advice"><b class="ok">已应用修正</b>：${c.note||""}<br>
+      <span class="hint">第 ${c.sessions||1} 次反馈 · ${new Date(c.lastAt).toLocaleString("zh-CN")}</span></div>
+    <div class="hint" style="margin:10px 0 6px">修正后三档关键参数：</div>
+    <table class="mini"><tr><th>参数</th><th>200g</th><th>100g</th><th>50g</th></tr>
+      <tr><td class="k">入豆温度</td><td>${p200.charge}℃</td><td>${p100.charge}℃</td><td>${p50.charge}℃</td></tr>
+      <tr><td class="k">一爆</td><td>${fmt(p200.fc[0])}/${p200.fc[1]}℃</td><td>${fmt(p100.fc[0])}/${p100.fc[1]}℃</td><td>${fmt(p50.fc[0])}/${p50.fc[1]}℃</td></tr>
+      <tr><td class="k">下豆</td><td>${fmt(p200.drop[0])}/${p200.drop[1]}℃</td><td>${fmt(p100.drop[0])}/${p100.drop[1]}℃</td><td>${fmt(p50.drop[0])}/${p50.drop[1]}℃</td></tr>
+      <tr><td class="k">发展/DTR</td><td>${fmt(p200.dev)}/${p200.dtr}%</td><td>${fmt(p100.dev)}/${p100.dtr}%</td><td>${fmt(p50.dev)}/${p50.dtr}%</td></tr>
+      <tr><td class="k">Agtron</td><td>${c.ag||b.ag}</td><td>${c.ag||b.ag}</td><td>${(c.ag||b.ag)+1}</td></tr>
+    </table>
+    <div class="modal-btns">
+      <button type="button" class="go ghost" onclick="removeCalib('${id}');closeCalibModal()">删除校准</button>
+      <button type="button" class="go" onclick="closeCalibModal()">关闭</button>
+    </div>`;
+  document.getElementById("calibMask").classList.add("show");
+}
+function closeCalibModal(){document.getElementById("calibMask").classList.remove("show");}
+document.getElementById("calibMask").addEventListener("click",e=>{if(e.target.id==="calibMask")closeCalibModal();});
+function removeCalib(id){
+  const cal=loadCalib();delete cal[id];saveCalib(cal);
+  if(curBean.id===id){buildP();makeBT();refreshAll();renderBeans();}
+  renderCalib();toast("已删除该豆种校准，恢复起始配方");
+}
+function clearAllCalib(){
+  if(!confirm("确定清空全部烘焙校准？此操作不可恢复。"))return;
+  saveCalib({});buildP();makeBT();refreshAll();renderBeans();renderCalib();toast("已清空全部校准");
+}
+
+function copyParams(){
+  const b=curBean,p=curP,cal=loadCalib()[b.id];
+  const txt=`【${b.name}】${curG}g 烘焙参数（${modeName()}）${cal?"（已校准）":""}\n`+
+    `产区 ${b.country} · 品种 ${b.variety} · ${b.process} · ${b.level}\n`+
+    `入豆温度 ${p.charge}℃ | 回温 ${fmt(p.turn[0])}/${p.turn[1]}℃ | 黄化 ${fmt(p.yellow[0])}/${p.yellow[1]}℃\n`+
+    `一爆 ${fmt(p.fc[0])}/${p.fc[1]}℃ → 结束 ${fmt(p.fcEnd[0])} | 下豆 ${fmt(p.drop[0])}/${p.drop[1]}℃\n`+
+    `发展 ${fmt(p.dev)} | DTR ${p.dtr}% | 目标 Agtron 豆 ${(cal&&cal.ag)||b.ag}\n`+
+    `火力值曲线 ${p.power.map(x=>x[1]).join("→")}\n`+
+    `风力值曲线 ${p.air.map(x=>x[1]).join("→")}\n`+
+    (cal?`校准记录：${cal.note}（第 ${cal.sessions} 次）\n`:"")+
+    `风味 ${b.flavor}`;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast("参数已复制到剪贴板")).catch(()=>fallbackCopy(txt));
+  }else fallbackCopy(txt);
+}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;
+  t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600);}
+function refreshAll(){buildP();makeBT();refreshDash();drawChart();refreshTable();refreshDiag();renderCalib();}
+window.addEventListener("resize",drawChart);
+window.addEventListener("load",drawChart);
+refreshAll();renderBeans();renderM1Events();renderCurveHist();
+setTimeout(drawChart,120);
+</script>
+</body>
+</html>

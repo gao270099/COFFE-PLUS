@@ -1,0 +1,13 @@
+{
+  "name": "smart-coffee-roaster",
+  "version": "1.0.0",
+  "description": "智能咖啡烘焙控制台 · 手机高清版",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
