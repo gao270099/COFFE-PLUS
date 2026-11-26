@@ -57,6 +57,9 @@ header .sub{display:none;}
 @media(max-width:960px){.grid-top{grid-template-columns:1fr 1fr;}}
 @media(max-width:640px){.grid-top{grid-template-columns:1fr;}}
 
+.dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:768px){.dt-grid{grid-template-columns:1fr;}}
+
 .filters{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
 .filters input{flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--line);
   border-radius:8px;background:#fff;font-size:15px;color:var(--ink);}
@@ -105,7 +108,7 @@ header .sub{display:none;}
   padding:10px 12px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;}
 .modal .go.ghost{background:#fff;color:var(--coffee);border:1px solid var(--line);}
 
-/* ===== 狙击手 M1 可交互设备面板（手机横屏一屏完整适配） ===== */
+/* ===== 狙击手 M1 可交互设备面板 ===== */
 .m1panel{background:linear-gradient(160deg,#2b2b2b,#3a3a3a);border:1.5px solid var(--gold);color:#e8e2d4;
   padding:6px 8px;margin-bottom:8px;}
 .m1-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:6px;margin-bottom:4px;
@@ -197,11 +200,7 @@ header .sub{display:none;}
 .m1-live .lrow.ok .li{background:#ffd479;color:#2b2b2b;}
 .m1-live .lrow b{color:#ffd479;}
 .m1-live .lempty{font-size:9px;color:#9a9182;text-align:center;padding:2px;line-height:1.2;}
-.m1-knobsum{background:#242424;border:1px solid var(--gold);border-radius:4px;padding:2px 6px;margin-bottom:3px;
-  font-size:9px;color:#cfc7b8;display:flex;gap:6px;flex-wrap:wrap;align-items:center;line-height:1.15;}
-.m1-knobsum b{color:#ffd479;font-size:10px;} .m1-knobsum .kf b{color:#ff9c6e;} .m1-knobsum .ks b{color:#8fd0d8;}
 
-/* 保存的曲线记录列表 */
 .m1-hist{margin-top:4px;background:#1c1c1c;border:1px solid #555;border-radius:5px;padding:4px 6px;}
 .m1-hist .ht{font-size:9.5px;color:var(--gold);font-weight:600;margin-bottom:3px;
   display:flex;justify-content:space-between;align-items:center;}
@@ -222,7 +221,6 @@ header .sub{display:none;}
 .seg button+button{border-left:1px solid var(--line);}
 .seg button.on{background:var(--coffee);color:#fff;font-weight:600;}
 
-/* 图表容器确保明确尺寸，避免在移动端/横屏下高度为 0 导致空白 */
 .chart-box{position:relative;background:#fffdf7;border:1px solid var(--line);border-radius:10px;padding:6px;min-height:140px;}
 canvas#chart{display:block;width:100%;height:180px;}
 .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px;font-size:11px;color:var(--muted);margin-top:7px;padding:0 2px;}
@@ -409,14 +407,12 @@ select.full,input.full{width:100%;}
     </div>
   </div>
 
-  <!-- 实时纠偏栏（紧贴控制区下方，调节滑杆时同屏立即可见） -->
   <div class="m1-live" id="m1LiveBox">
     <div class="lt"><span>🛠️ 实时纠偏 <small id="m1LiveCnt" style="color:#a9a094;font-weight:400"></small></span><span class="sm" id="m1LiveStage">待机 · 入豆后启用</span></div>
     <div class="m1-trend" id="m1Trend" style="display:none"></div>
     <div id="m1LiveBody"><div class="lempty">点「▶ 放豆/开始」或拖动上方读数滑杆录入实机值，此处立即显示精确修正指令。</div></div>
   </div>
 
-  <!-- 已保存曲线记录列表与查看（位于实时纠偏栏下方） -->
   <div class="m1-hist" id="m1HistBox">
     <div class="ht">
       <span>📁 已保存曲线记录（<span id="m1HistCnt">0</span>）<small id="m1LoadedBadge" style="display:none;color:#7fd1a8;margin-left:4px"></small></span>
@@ -520,9 +516,57 @@ select.full,input.full{width:100%;}
   <div class="hint" style="margin-top:8px">调整原则：<b>一次只改一个变量</b>，连续记录 3–5 锅再评估。</div>
 </div>
 
-<!-- 8 我的烘焙校准 -->
+<!-- 8 DT / DTR 智能测算与参考 -->
+<div class="panel" id="dtPanel">
+  <h2><span class="n">8</span>DT / DTR 智能测算与参考 <span class="tagx">M1 面板自动联动</span></h2>
+  <div class="dt-grid">
+    <div>
+      <div class="stat">
+        <div class="k">正向测算：已知一爆 + 目标 DTR → 求下豆时间</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+           <div style="flex:1"><label class="hint">一爆分</label><input type="number" id="calcFcMin" oninput="runDtCalc()" class="full" placeholder="分" min="0"></div>
+           <div style="flex:1"><label class="hint">一爆秒</label><input type="number" id="calcFcSec" oninput="runDtCalc()" class="full" placeholder="秒" min="0" max="59"></div>
+           <div style="flex:1"><label class="hint">目标DTR%</label><input type="number" id="calcTargetDtr" value="20" oninput="runDtCalc()" class="full" placeholder="%" min="0" max="50"></div>
+        </div>
+        <div class="score" style="margin-top:10px;margin-bottom:0;padding:6px 11px;">
+           <div class="num" id="calcOutDt">—</div>
+           <div><div style="font-size:13.5px;font-weight:600">DT 发展时间</div><div class="hint" id="calcOutTotal">总烘焙时间：—</div></div>
+        </div>
+      </div>
+      <div class="stat" style="margin-top:8px">
+        <div class="k">反向复盘：已知一爆 + 实际总时间 → 求 DTR</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+           <div style="flex:1"><label class="hint">总时间分</label><input type="number" id="calcTotalMin" oninput="runDtCalcRev()" class="full" placeholder="分" min="0"></div>
+           <div style="flex:1"><label class="hint">总时间秒</label><input type="number" id="calcTotalSec" oninput="runDtCalcRev()" class="full" placeholder="秒" min="0" max="59"></div>
+        </div>
+        <div class="score" style="margin-top:10px;margin-bottom:0;padding:6px 11px;">
+           <div class="num mid" id="calcOutDtrRev">—</div>
+           <div><div style="font-size:13.5px;font-weight:600">实际 DTR</div><div class="hint" id="calcOutDtRev">实际 DT：—</div></div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:6px">💡 <b>联动提示</b>：在上方「M1 面板」打点记录<b>一爆</b>及<b>下豆</b>时间后，此处自动双向同步计算。</div>
+    </div>
+    
+    <div>
+      <div class="stat" style="height:100%;display:flex;flex-direction:column;padding:8px 10px;">
+        <div class="k">烘焙度 DTR · DT 参考区间 (50g，狙击手 M1)</div>
+        <table class="mini" style="margin-top:8px;flex:1">
+          <tr><th>烘焙度</th><th>DTR 参考</th><th>DT 时长</th><th>风味定位</th></tr>
+          <tr><td class="k">浅烘</td><td>15–20%</td><td>45–75s</td><td>明亮果香、花茶感</td></tr>
+          <tr><td class="k">浅中烘</td><td>20–23%</td><td>75–105s</td><td>酸甜平衡，焦糖感</td></tr>
+          <tr><td class="k">中烘</td><td>23–27%</td><td>105–150s</td><td>坚果、焦糖、巧克力</td></tr>
+          <tr><td class="k">中深烘</td><td>27–30%</td><td>150–180s</td><td>苦甜、醇厚、二爆前沿</td></tr>
+          <tr><td class="k">深烘</td><td>30%+</td><td>180s+</td><td>烟熏、炭化、油脂</td></tr>
+        </table>
+        <div class="advice" style="margin-top:8px"><b>操作要点</b>：DTR 是比例标尺，并非唯一标准。同一 DT 下 ROR 断崖也会造成发展不均；需结合豆温、ROR 与口感共同判断。<br><br><b>批量速算举例</b>：一爆 5:00 (300秒) × 目标 DTR 20% → DT 需要 75 秒（下豆 6:15）。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 9 我的烘焙校准 -->
 <div class="panel">
-  <h2><span class="n">8</span>我的烘焙校准 <span class="tagx">自动保存</span></h2>
+  <h2><span class="n">9</span>我的烘焙校准 <span class="tagx">自动保存</span></h2>
   <div id="calibList"><div class="calib-empty">尚无校准记录。烘焙完成后点「烘后问卷」提交，校准会保存在此，下次选同种豆自动调用。</div></div>
   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
     <button type="button" class="btn green sm" onclick="openSurvey()">📋 烘后问卷 · 自学习</button>
@@ -610,81 +654,24 @@ mk({id:"gua-antigua",name:"安提瓜（水洗）",en:"ANTIGUA WASHED",
  intro:"火山灰土壤与三面环谷微气候造就安提瓜独特的烟熏与巧克力调，是中美经典产区。",
  advice:"中焙，Agtron 豆 56–61，发展 1:45–2:00。过浅则烟熏调出不来。",
  base:{charge:205,turn:[60,94],yellow:[250,151],fc:[480,197],drop:[575,209],power:[[0,97],[60,90],[158,74],[250,59],[365,44],[480,31],[575,18]],air:[[0,20],[60,30],[250,50],[480,70],[575,90]]}}),
-mk({id:"gua-huehuetenango",name:"薇薇特南果（水洗）",en:"HUEHUETENANGO WASHED",
- region:"中美洲",country:"危地马拉 · 薇薇特南果",variety:"波旁 / 卡杜拉",process:"水洗",alt:"1600–1900m",density:"高",level:"中浅焙",ag:62,
- feats:["花香","柑橘","焦糖","巧克力","明亮"],flavor:"花香 · 柑橘 · 焦糖 · 明亮",
- intro:"危地马拉最高海拔产区之一，干热风带来高酸与花香，是中美水洗豆的优质代表。",
- advice:"中浅焙，Agtron 豆 60–65，发展 1:30–1:50，保留明亮酸质。"}),
 mk({id:"hon-copan",name:"科潘（水洗）",en:"COPAN WASHED",
  region:"中美洲",country:"洪都拉斯 · 科潘",variety:"卡杜艾 Catuai",process:"水洗",alt:"1400–1600m",density:"中",level:"中焙",ag:60,
  feats:["焦糖","坚果","苹果","可可","亲和"],flavor:"焦糖 · 坚果 · 苹果 · 温和",
  intro:"洪都拉斯是中美洲最大产国，科潘高海拔水洗豆干净温和，常作入门精品与拼配。",
  advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。中度发展带出焦糖甜与坚果。",
  base:{charge:204,turn:[60,94],yellow:[252,151],fc:[480,198],drop:[572,209],power:[[0,97],[60,90],[160,75],[252,60],[368,45],[480,32],[572,18]],air:[[0,20],[60,30],[252,50],[480,70],[572,90]]}}),
-mk({id:"slv-apaneca",name:"阿帕内卡-伊拉马特佩克（水洗）",en:"APANECA-ILAMATEPEC WASHED",
- region:"中美洲",country:"萨尔瓦多 · 阿帕内卡",variety:"波旁 Bourbon",process:"水洗",alt:"1500–1700m",density:"中高",level:"中焙",ag:60,
- feats:["红糖","杏仁","柑橘","焦糖","柔和"],flavor:"红糖 · 杏仁 · 柑橘 · 柔和",
- intro:"萨尔瓦多火山产区，波旁水洗带温柔的红糖与坚果甜，是中美被低估的产区。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。温柔甜感忌焙过苦。"}),
-mk({id:"nic-jinotega",name:"希诺特加（水洗）",en:"JINOTEGA WASHED",
- region:"中美洲",country:"尼加拉瓜 · 希诺特加",variety:"卡杜拉 Caturra",process:"水洗",alt:"1400–1700m",density:"中高",level:"中焙",ag:60,
- feats:["巧克力","坚果","红果","焦糖","干净"],flavor:"巧克力 · 坚果 · 红果 · 干净",
- intro:"尼加拉瓜北部高海拔产区，水洗豆干净带巧克力与红果甜，平衡度高。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
-mk({id:"mex-chiapas",name:"恰帕斯（水洗）",en:"CHIAPAS WASHED",
- region:"中美洲",country:"墨西哥 · 恰帕斯",variety:"卡蒂摩 / 波旁",process:"水洗",alt:"1400–1600m",density:"中",level:"中焙",ag:61,
- feats:["坚果","牛奶巧克力","柑橘","温和","干净"],flavor:"坚果 · 牛奶巧克力 · 柑橘 · 温和",
- intro:"墨西哥南部主产区，水洗豆温和干净、巧克力坚果调突出，是拉美口粮精品的稳定来源。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。稳火即可带出坚果甜。"}),
 mk({id:"col-huila",name:"慧兰（水洗）",en:"HUILA WASHED",
  region:"南美洲",country:"哥伦比亚 · 慧兰",variety:"卡斯蒂略 Castillo",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:60,
  feats:["焦糖","坚果","红苹果","可可","均衡"],flavor:"焦糖 · 坚果 · 红色水果 · 均衡",
  intro:"哥伦比亚最大精品产区，水洗豆干净均衡，是日常口粮与意式拼配的稳定选择。",
  advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00，DTR 19–22%。梅拉德段别太急。",
  base:{charge:205,turn:[60,95],yellow:[255,152],fc:[485,198],drop:[580,210],power:[[0,97],[60,90],[160,75],[255,60],[370,45],[485,32],[580,19]],air:[[0,20],[60,30],[255,50],[485,70],[580,90]]}}),
-mk({id:"col-geisha",name:"慧兰 瑰夏（水洗）",en:"HUILA GEISHA WASHED",
- region:"南美洲",country:"哥伦比亚 · 慧兰",variety:"瑰夏 Gesha",process:"水洗",alt:"1600–1900m",density:"高",level:"浅中焙",ag:66,
- feats:["花香","柑橘","蜂蜜","白色水果","干净"],flavor:"花香 · 柑橘 · 蜂蜜 · 优雅",
- intro:"哥伦比亚高海拔瑰夏，酸质比巴拿马柔和，花香突出，性价比优于巴拿马同品种。",
- advice:"浅中焙，Agtron 豆 63–68，发展 1:25–1:40。保留花香需浅。",
- base:{charge:202,turn:[57,93],yellow:[245,151],fc:[470,197],drop:[565,206],power:[[0,96],[57,89],[155,73],[245,57],[355,42],[470,29],[565,17]],air:[[0,20],[57,30],[245,50],[470,80],[565,100]]}}),
-mk({id:"col-cauca",name:"考卡（水洗）",en:"CAUCA WASHED",
- region:"南美洲",country:"哥伦比亚 · 考卡",variety:"卡斯蒂略 / 波旁",process:"水洗",alt:"1700–2000m",density:"高",level:"浅中焙",ag:64,
- feats:["花香","柑橘","红糖","果汁感","干净"],flavor:"花香 · 柑橘 · 红糖 · 果汁感",
- intro:"考卡高海拔、火山土，出产的咖啡酸质明亮、果汁感强，是哥伦比亚精品的新星产区。",
- advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:45，保留果汁与花香。"}),
 mk({id:"bra-cerrado-n",name:"喜拉多（日晒）",en:"CERRADO NATURAL",
  region:"南美洲",country:"巴西 · 喜拉多",variety:"黄波旁 Yellow Bourbon",process:"日晒",alt:"1000–1200m",density:"中",level:"中深焙",ag:50,
  feats:["榛果","牛奶巧克力","焦糖","低酸","醇厚"],flavor:"坚果 · 巧克力 · 焦糖 · 低酸醇厚",
  intro:"巴西最大产区，日晒波旁甜感高、body 厚，低酸特性使其常被用作意式基底。",
  advice:"中深焙，Agtron 豆 48–54，可进二爆初期。发展 2:00–2:20，DTR 22–24%。低密度豆入豆温度别太高防焦斑。",
  base:{charge:210,turn:[65,98],yellow:[270,155],fc:[510,200],drop:[640,219],power:[[0,100],[65,92],[170,80],[270,65],[390,52],[510,38],[590,28],[640,14]],air:[[0,20],[65,30],[270,50],[510,70],[640,90]]}}),
-mk({id:"bra-cerrado-w",name:"喜拉多（半水洗）",en:"CERRADO PULPED NATURAL",
- region:"南美洲",country:"巴西 · 喜拉多",variety:"黄波旁",process:"半水洗",alt:"1000–1200m",density:"中",level:"中焙",ag:55,
- feats:["坚果","红糖","柑橘","干净","甜感"],flavor:"坚果 · 红糖 · 柔和果酸",
- intro:"去果肉日晒保留部分果胶甜感，又比全日晒干净，是巴西精品化的代表。",
- advice:"中焙，Agtron 豆 53–58，发展 1:50–2:10。",
- base:{charge:208,turn:[63,97],yellow:[262,154],fc:[500,199],drop:[615,214],power:[[0,99],[63,91],[165,78],[262,63],[380,50],[500,36],[615,16]],air:[[0,20],[63,30],[262,50],[500,70],[615,90]]}}),
-mk({id:"bra-mantiqueira",name:"曼蒂凯拉（水洗）",en:"MANTIQUEIRA WASHED",
- region:"南美洲",country:"巴西 · 曼蒂凯拉",variety:"黄波旁 / 卡杜艾",process:"水洗",alt:"1200–1400m",density:"中",level:"中焙",ag:57,
- feats:["坚果","焦糖","柑橘","干净","均衡"],flavor:"坚果 · 焦糖 · 柑橘 · 均衡",
- intro:"巴西东南高海拔产区，水洗豆比喜拉多更干净明亮，展现巴西精品的另一面。",
- advice:"中焙，Agtron 豆 55–60，发展 1:50–2:10。"}),
-mk({id:"per-cajamarca",name:"卡哈马卡（水洗）",en:"CAJAMARCA WASHED",
- region:"南美洲",country:"秘鲁 · 卡哈马卡",variety:"卡斯蒂略 / 波旁",process:"水洗",alt:"1600–1900m",density:"中高",level:"中焙",ag:62,
- feats:["焦糖","坚果","红果","干净","柔和"],flavor:"焦糖 · 坚果 · 红果 · 干净",
- intro:"秘鲁北部高海拔产区，有机种植普遍，水洗豆干净柔和、甜感稳定。",
- advice:"中焙，Agtron 豆 59–64，发展 1:40–2:00。"}),
-mk({id:"bol-yungas",name:"雅库伊（水洗）",en:"YUNGAS WASHED",
- region:"南美洲",country:"玻利维亚 · 雅库伊",variety:"波旁 Bourbon",process:"水洗",alt:"1600–1900m",density:"高",level:"浅中焙",ag:64,
- feats:["花香","柑橘","红糖","茶感","干净"],flavor:"花香 · 柑橘 · 红糖 · 茶感",
- intro:"玻利维亚高海拔有机波旁，风味细腻干净、甜感优雅，是南美小众精品的惊喜。",
- advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:45，保留细腻花香。"}),
-mk({id:"ecu-andes",name:"安第斯（水洗）",en:"ECUADOR ANDES WASHED",
- region:"南美洲",country:"厄瓜多尔 · 安第斯",variety:"卡杜拉 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:61,
- feats:["坚果","焦糖","柑橘","巧克力","干净"],flavor:"坚果 · 焦糖 · 柑橘 · 干净",
- intro:"厄瓜多尔安第斯山麓咖啡产量不大，但高海拔水洗豆干净带坚果焦糖甜，接近哥伦比亚风格。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
 mk({id:"eth-kochere",name:"耶加雪菲 科契尔（水洗）",en:"YIRGACHEFFE KOCHERE WASHED",
  region:"非洲",country:"埃塞 · 耶加雪菲",variety:"原生种 Heirloom",process:"水洗",alt:"1900–2100m",density:"很高",level:"浅焙",ag:72,fc:[420,195],
  feats:["柠檬","茉莉","伯爵茶","柑橘","干净明亮"],flavor:"柠檬 · 花香 · 柑橘 · 茶感",
@@ -697,104 +684,24 @@ mk({id:"eth-guji",name:"古吉 罕贝拉（日晒）",en:"GUJI HAMBELA NATURAL",
  intro:"近年竞赛豆热门产区，日晒带来浓烈的莓果与发酵甜香，风味爆炸力强。",
  advice:"浅焙，Agtron 豆 68–73。日晒发酵味重，风力全程偏开（60–100），发展 1:05–1:20，避免闷出醋酸。",
  base:{charge:195,turn:[48,89],yellow:[215,147],fc:[410,194],drop:[482,200],power:[[0,93],[48,85],[135,68],[215,52],[310,38],[410,25],[482,15]],air:[[0,30],[48,40],[215,60],[410,90],[482,100]]}}),
-mk({id:"eth-sidama",name:"西达摩（水洗）",en:"SIDAMA WASHED",
- region:"非洲",country:"埃塞 · 西达摩",variety:"原生种 Heirloom",process:"水洗",alt:"1800–2000m",density:"高",level:"浅焙",ag:71,
- feats:["花香","柑橘","莓果","茶感","明亮"],flavor:"花香 · 柑橘 · 莓果 · 茶感",
- intro:"埃塞最早的商业咖啡产区，水洗豆花香明亮、酸质活泼，是耶加之外的经典选择。",
- advice:"浅焙，Agtron 豆 69–74，发展 1:05–1:25，前段火力足、发展短。"}),
-mk({id:"eth-limmu",name:"利姆（日晒）",en:"LIMU NATURAL",
- region:"非洲",country:"埃塞 · 利姆",variety:"原生种 Heirloom",process:"日晒",alt:"1700–1900m",density:"高",level:"浅中焙",ag:68,
- feats:["莓果","巧克力","花香","甜感","圆润"],flavor:"莓果 · 巧克力 · 花香 · 甜感",
- intro:"利姆日晒豆比古吉温和，莓果与巧克力 balanced，甜感圆润，是入门埃塞日晒的好选择。",
- advice:"浅中焙，Agtron 豆 66–71，发展 1:10–1:30，风力偏开防发酵。"}),
 mk({id:"ken-neri",name:"涅里（水洗）SL28",en:"NYERI SL28 WASHED",
  region:"非洲",country:"肯尼亚 · 涅里",variety:"SL28 / SL34",process:"水洗",alt:"1700–1900m",density:"很高",level:"浅中焙",ag:63,
  feats:["黑加仑","葡萄柚","乌梅","高酸","果汁感"],flavor:"黑加仑 · 葡萄柚 · 乌梅 · 强酸",
  intro:"肯尼亚 SL28 以强烈的黑加仑酸与果汁感著称，是高酸的标杆。",
  advice:"浅中焙，Agtron 豆 61–66。高酸豆别焙太浅否则尖酸，发展 1:25–1:40 让酸质圆润又不失明亮。",
  base:{charge:200,turn:[55,92],yellow:[235,149],fc:[450,195],drop:[530,204],power:[[0,95],[55,88],[145,71],[235,55],[335,41],[450,29],[530,17]],air:[[0,30],[55,30],[235,50],[450,80],[530,90]]}}),
-mk({id:"ken-kirinyaga",name:"基里尼亚加 AA（水洗）",en:"KIRINYAGA AA WASHED",
- region:"非洲",country:"肯尼亚 · 基里尼亚加",variety:"SL28 / SL34 / Ruiru11",process:"水洗",alt:"1700–1900m",density:"很高",level:"浅中焙",ag:64,
- feats:["黑加仑","番茄","柑橘","高酸","果汁感"],flavor:"黑加仑 · 番茄 · 柑橘 · 强酸",
- intro:"肯尼亚精品核心产区，AA 大粒水洗以浓烈黑加仑与番茄酸闻名，果汁感极强。",
- advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:40，酸质要圆润不尖。"}),
-mk({id:"tan-kilimanjaro",name:"乞力马扎罗（水洗）",en:"KILIMANJARO WASHED",
- region:"非洲",country:"坦桑尼亚 · 乞力马扎罗",variety:"铁皮卡 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:62,
- feats:["柑橘","红糖","坚果","明亮","干净"],flavor:"柑橘 · 红糖 · 坚果 · 明亮",
- intro:"坦桑尼亚高海拔产区，水洗豆酸质明亮、甜感干净，风格介于肯尼亚与哥伦比亚之间。",
- advice:"中焙，Agtron 豆 59–64，发展 1:40–2:00。"}),
-mk({id:"ugi-elgon",name:"埃尔贡山（水洗）",en:"MT ELGON WASHED",
- region:"非洲",country:"乌干达 · 埃尔贡山",variety:"波旁 / 铁皮卡",process:"水洗",alt:"1700–2000m",density:"高",level:"浅中焙",ag:64,
- feats:["柑橘","莓果","红糖","花香","干净"],flavor:"柑橘 · 莓果 · 红糖 · 花香",
- intro:"乌干达东部高海拔精品产区，水洗豆干净带柑橘与莓果甜，是东非新兴精品力量。",
- advice:"浅中焙，Agtron 豆 62–67，发展 1:25–1:45。"}),
-mk({id:"rwanda",name:"卢旺达（水洗）",en:"RWANDA WASHED",
- region:"非洲",country:"卢旺达 · 胡耶",variety:"波旁 Bourbon",process:"水洗",alt:"1700–2000m",density:"高",level:"浅中焙",ag:65,
- feats:["花香","红茶","柑橘","红糖","干净"],flavor:"花香 · 红茶 · 柑橘 · 红糖",
- intro:"卢旺达高海拔波旁水洗，风味干净细腻、花香与红茶调突出，是非洲精品的后起之秀。",
- advice:"浅中焙，Agtron 豆 63–68，发展 1:25–1:45，保留花香与干净度。"}),
-mk({id:"burundi",name:"布隆迪（水洗）",en:"BURUNDI WASHED",
- region:"非洲",country:"布隆迪 · 卡扬扎",variety:"波旁 Bourbon",process:"水洗",alt:"1700–1900m",density:"高",level:"浅中焙",ag:65,
- feats:["花香","柑橘","莓果","红茶","明亮"],flavor:"花香 · 柑橘 · 莓果 · 红茶",
- intro:"布隆迪与卢旺达风土相近，高海拔波旁水洗带柔和花香与莓果酸，干净明亮。",
- advice:"浅中焙，Agtron 豆 63–68，发展 1:25–1:45。"}),
-mk({id:"malawi",name:"马拉维（水洗）",en:"MALAWI WASHED",
- region:"非洲",country:"马拉维 · 姆祖祖",variety:"卡杜拉 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:61,
- feats:["柑橘","焦糖","坚果","茶感","干净"],flavor:"柑橘 · 焦糖 · 坚果 · 茶感",
- intro:"马拉维高原咖啡产量小，水洗豆干净带柑橘与焦糖甜，风格温和。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
-mk({id:"zambia",name:"卡萨马（水洗）",en:"KASAMA WASHED",
- region:"非洲",country:"赞比亚 · 卡萨马",variety:"波旁 / 卡蒂摩",process:"水洗",alt:"1500–1700m",density:"中高",level:"中焙",ag:61,
- feats:["柑橘","红糖","坚果","巧克力","干净"],flavor:"柑橘 · 红糖 · 坚果 · 巧克力",
- intro:"赞比亚北部产区，水洗豆干净带柑橘与坚果甜，是南部非洲精品的代表。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
 mk({id:"id-mandheling",name:"曼特宁（湿刨）",en:"MANDHELING GILING BASAH",
  region:"亚洲",country:"印尼 · 苏门答腊",variety:"卡蒂摩 Catimor",process:"湿刨",alt:"1200–1500m",density:"中",level:"深焙",ag:45,
  feats:["雪松","草本","巧克力","泥土","低酸厚重"],flavor:"草本 · 雪松 · 黑巧 · 极低酸",
  intro:"苏门答腊湿刨法造就独特草本与泥土调，body 极厚、酸度极低，是深焙与意式经典。",
  advice:"深焙，Agtron 豆 43–50，可进二爆。发展 2:10–2:30，DTR 23–25%。湿刨豆含水高，干燥期拉长。",
  base:{charge:215,turn:[70,100],yellow:[285,157],fc:[530,202],drop:[665,223],power:[[0,100],[70,93],[185,82],[285,67],[410,54],[530,40],[600,30],[665,14]],air:[[0,20],[70,30],[285,50],[530,70],[665,90]]}}),
-mk({id:"id-java",name:"爪哇（水洗）",en:"JAVA WASHED",
- region:"亚洲",country:"印尼 · 爪哇",variety:"铁皮卡 Typica",process:"水洗",alt:"1000–1400m",density:"中",level:"中深焙",ag:54,
- feats:["草本","雪松","巧克力","低酸","醇厚"],flavor:"草本 · 雪松 · 巧克力 · 醇厚",
- intro:"爪哇是印尼最早种植咖啡的岛屿，水洗豆带温和草本与雪松调，body 厚、酸度低。",
- advice:"中深焙，Agtron 豆 51–56，发展 2:00–2:20。"}),
-mk({id:"id-sulawesi",name:"苏拉威西（水洗）",en:"SULAWESI WASHED",
- region:"亚洲",country:"印尼 · 苏拉威西",variety:"铁皮卡 / 卡蒂摩",process:"水洗",alt:"1200–1600m",density:"中",level:"中深焙",ag:53,
- feats:["草本","坚果","巧克力","低酸","厚实"],flavor:"草本 · 坚果 · 巧克力 · 厚实",
- intro:"苏拉威西托纳加高原水洗豆带独特草本与坚果调，body 厚实、酸度低，风格接近曼特宁但更干净。",
- advice:"中深焙，Agtron 豆 50–55，发展 2:00–2:20。"}),
-mk({id:"vn-dalat",name:"大叻（水洗）",en:"DA LAT WASHED",
- region:"亚洲",country:"越南 · 大叻",variety:"铁皮卡 / 卡蒂摩",process:"水洗",alt:"1500–1700m",density:"中高",level:"中焙",ag:60,
- feats:["坚果","焦糖","柑橘","茶感","干净"],flavor:"坚果 · 焦糖 · 柑橘 · 茶感",
- intro:"越南以罗布斯塔闻名，但大叻高海拔阿拉比卡水洗豆干净带柑橘与坚果甜，是越南精品的代表。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"}),
-mk({id:"in-mysore",name:"迈索尔（水洗）",en:"MYSORE WASHED",
- region:"亚洲",country:"印度 · 迈索尔",variety:"卡蒂摩 / 铁皮卡",process:"水洗",alt:"1000–1400m",density:"中",level:"中深焙",ag:56,
- feats:["坚果","巧克力","香料","低酸","醇厚"],flavor:"坚果 · 巧克力 · 香料 · 醇厚",
- intro:"印度南部主产区，水洗豆带坚果巧克力与温和香料调，body 厚、酸度低，是印度精品的代表。",
- advice:"中深焙，Agtron 豆 53–58，发展 2:00–2:15。"}),
 mk({id:"yn-baoshan",name:"保山（水洗）",en:"BAOSHAN WASHED",
  region:"亚洲",country:"中国 · 云南保山",variety:"铁皮卡 / 卡蒂摩",process:"水洗",alt:"1400–1600m",density:"中高",level:"中焙",ag:60,
  feats:["坚果","红糖","柑橘","茶感","干净"],flavor:"坚果 · 红糖 · 柑橘 · 茶感",
  intro:"云南新版图代表产区，高海拔水洗豆干净、带茶感与红糖甜，性价比高，适合日常与练习。",
  advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。注意部分卡蒂摩有罗布斯塔血统，别焙过苦。",
- base:{charge:204,turn:[60,94],yellow:[250,151],fc:[480,198],drop:[572,209],power:[[0,97],[60,90],[158,74],[250,59],[365,44],[480,31],[572,18]],air:[[0,20],[60,30],[250,50],[480,70],[572,90]]}}),
-mk({id:"yn-lincang",name:"临沧（日晒）",en:"LINCANG NATURAL",
- region:"亚洲",country:"中国 · 云南临沧",variety:"卡蒂摩 / 铁皮卡",process:"日晒",alt:"1500–1800m",density:"中高",level:"中焙",ag:59,
- feats:["莓果","红糖","坚果","巧克力","甜感"],flavor:"莓果 · 红糖 · 坚果 · 甜感",
- intro:"云南临沧日晒豆近年品质提升明显，带柔和莓果与红糖甜，是国产精品的新势力。",
- advice:"中焙，Agtron 豆 56–62，发展 1:45–2:05，风力偏开防发酵。"}),
-mk({id:"ye-mocha",name:"摩卡（日晒）",en:"YEMEN MOCHA NATURAL",
- region:"亚洲",country:"也门 · 哈拉兹",variety:"原生种 Typica 变种",process:"日晒",alt:"1500–2000m",density:"中高",level:"中深焙",ag:55,
- feats:["巧克力","酒香","香料","莓果","野性"],flavor:"巧克力 · 酒香 · 香料 · 野性",
- intro:"也门摩卡是咖啡历史上的传奇，梯田日晒带来野性的酒香、巧克力与香料调，风味独特。",
- advice:"中深焙，Agtron 豆 52–57，发展 1:55–2:15。野性风味忌焙过深掩盖层次。"}),
-mk({id:"png",name:"瓦盖（水洗）",en:"WAGHI WASHED",
- region:"大洋洲",country:"巴布亚新几内亚 · 瓦盖",variety:"铁皮卡 / 波旁",process:"水洗",alt:"1500–1800m",density:"中高",level:"中焙",ag:61,
- feats:["坚果","柑橘","红糖","巧克力","干净"],flavor:"坚果 · 柑橘 · 红糖 · 巧克力",
- intro:"巴新高海拔水洗豆干净带坚果与柑橘甜，body 中等、风味温和，是大洋洲精品的主力。",
- advice:"中焙，Agtron 豆 58–63，发展 1:40–2:00。"})
+ base:{charge:204,turn:[60,94],yellow:[250,151],fc:[480,198],drop:[572,209],power:[[0,97],[60,90],[158,74],[250,59],[365,44],[480,31],[572,18]],air:[[0,20],[60,30],[250,50],[480,70],[572,90]]}})
 ];
 const COUNTRIES=new Set(BEANS.map(b=>b.country.split(" · ")[0]));
 
@@ -803,6 +710,55 @@ let wizSurvey=null;
 let roastMode="medium";
 const modeName=()=>({light:"浅烘",medium:"中烘",dark:"深烘"}[roastMode]||"中烘");
 const needSecondCrack=()=>roastMode==="dark";
+
+/* DT Calculator Logic */
+function runDtCalc() {
+  const m = parseInt(document.getElementById('calcFcMin').value) || 0;
+  const s = parseInt(document.getElementById('calcFcSec').value) || 0;
+  const dtr = parseFloat(document.getElementById('calcTargetDtr').value) || 0;
+  if (m === 0 && s === 0) {
+    document.getElementById('calcOutDt').textContent = '—';
+    document.getElementById('calcOutTotal').textContent = '总烘焙时间：—';
+    return;
+  }
+  const fcTotal = m * 60 + s;
+  const dtrRatio = dtr / 100;
+  if (dtrRatio >= 1 || dtrRatio < 0) return;
+  const total = fcTotal / (1 - dtrRatio);
+  const dt = total - fcTotal;
+  document.getElementById('calcOutDt').textContent = fmt(dt);
+  document.getElementById('calcOutTotal').textContent = '总烘焙时间：' + fmt(total);
+}
+function runDtCalcRev() {
+  const fm = parseInt(document.getElementById('calcFcMin').value) || 0;
+  const fs = parseInt(document.getElementById('calcFcSec').value) || 0;
+  const tm = parseInt(document.getElementById('calcTotalMin').value) || 0;
+  const ts = parseInt(document.getElementById('calcTotalSec').value) || 0;
+  const fcTotal = fm * 60 + fs;
+  const total = tm * 60 + ts;
+  if (fcTotal === 0 || total === 0 || total <= fcTotal) {
+    document.getElementById('calcOutDtrRev').textContent = '—';
+    document.getElementById('calcOutDtRev').textContent = '实际 DT：—';
+    return;
+  }
+  const dt = total - fcTotal;
+  const dtr = (dt / total) * 100;
+  document.getElementById('calcOutDtrRev').textContent = dtr.toFixed(1) + '%';
+  document.getElementById('calcOutDtRev').textContent = '实际 DT：' + fmt(dt) + ' (' + Math.round(dt) + '秒)';
+}
+function syncDtCalculator() {
+  if (m1Marks.fcS != null) {
+    document.getElementById('calcFcMin').value = Math.floor(m1Marks.fcS / 60);
+    document.getElementById('calcFcSec').value = Math.floor(m1Marks.fcS % 60);
+  }
+  if (m1Marks.drop != null) {
+    document.getElementById('calcTotalMin').value = Math.floor(m1Marks.drop / 60);
+    document.getElementById('calcTotalSec').value = Math.floor(m1Marks.drop % 60);
+  }
+  runDtCalc();
+  runDtCalcRev();
+}
+
 function setRoastMode(v){
   roastMode=v;
   const el=document.getElementById("roastMode");if(el)el.value=v;
@@ -883,18 +839,10 @@ function makeBT(){
   RORF=hermite([[p.turn[0],peak],[p.yellow[0],yR],[p.fc[0],fcR],[p.drop[0],dropR]]);
   ET=hermite(p.env);
 }
-function rorAt(t){
-  if(!RORF)return 0;
-  if(t<curP.turn[0])return 0;
-  return Math.max(0,RORF(Math.min(t,curP.drop[0])));
-}
-function etAt(t){
-  if(!ET)return 0;
-  return Math.round(ET(Math.min(Math.max(t,0),curP.drop[0])));
-}
+function rorAt(t){if(!RORF)return 0;if(t<curP.turn[0])return 0;return Math.max(0,RORF(Math.min(t,curP.drop[0])));}
+function etAt(t){if(!ET)return 0;return Math.round(ET(Math.min(Math.max(t,0),curP.drop[0])));}
 function devRateAt(t){
-  const p=curP;
-  if(t<=p.fc[0])return 0;
+  const p=curP;if(t<=p.fc[0])return 0;
   return Math.round((t-p.fc[0])/Math.max(1,t)*100);
 }
 function phaseAt(t){
@@ -909,7 +857,6 @@ function liveTipAt(t){
   const p=curP,fire=Math.round(interp(p.power,t)),air=Math.round(interp(p.air,t));
   return `火力 ${fire} · 风力 ${air} · 豆温 ${Math.round(BT(t))}℃ / 风温 ${etAt(t)}℃ · ROR ${rorAt(t).toFixed(1)} · 发展率 ${devRateAt(t)}%`;
 }
-
 function advise(target,inp){
   const A=[];
   const clampK=(v)=>clamp(Math.round(v),0,100);
@@ -939,7 +886,6 @@ function advise(target,inp){
   const dRor =inp.ror ==null?0:inp.ror -target.ror;
   const dDev =inp.dev ==null?0:inp.dev -target.dev;
   const dStir=inp.stir==null?0:inp.stir-target.stir;
-
   const needMoreHeat=(dFire<-5)||(dBt<-5)||(dRor<-2.5)||(dEt<-6);
   let capAirOpened=false;
   if(capped && target.fire>fireMax && needMoreHeat){
@@ -962,35 +908,6 @@ function advise(target,inp){
   }else if(dBt>5){
     if(dRor>2)add("fire","down",3,`豆温高 ${Math.round(dBt)}℃ 且 ROR 高 ${dRor.toFixed(1)}：火力下调 3 并开大风门。`);
     else add("process","—",0,`豆温高 ${Math.round(dBt)}℃ 但 ROR 正常：准备提前进入下一阶段。`);
-  }
-  const hasFU=A.some(x=>x.kind==="fire"&&x.dir==="up"),hasFD=A.some(x=>x.kind==="fire"&&x.dir==="down");
-  const hasAO=A.some(x=>x.kind==="air"&&x.dir==="open"),hasAC=A.some(x=>x.kind==="air"&&x.dir==="close");
-  if(dRor<-2.5){
-    if(hasFU){if(!hasAC)add("air","close",10,`ROR 低 ${dRor.toFixed(1)}：配合风门下调 10 蓄热。`);}
-    else if(capped){add("process","—",0,`ROR 低 ${dRor.toFixed(1)} 防 Crash：优先减量或提入豆温。`);}
-    else if(!hasAC)add("fire","up",2,`ROR 低 ${dRor.toFixed(1)} 防 Crash → 火力上调 2 或风门下调 10。`);
-  }else if(dRor>2.5){
-    if(hasAO){if(!hasFD)add("fire","down",2,`ROR 高 ${dRor.toFixed(1)}：开风门同时火力下调 2。`);}
-    else if(!hasFD)add("air","open",10,`ROR 高 ${dRor.toFixed(1)} 防 Flick → 风门上调 10 散热。`);
-  }
-  if(inp.et!=null && Math.abs(dEt)>6){
-    if(dEt<-6){
-      if(capped)add("process","—",0,`风温低 ${Math.round(-dEt)}℃：关小风门蓄热或提入豆温。`);
-      else add("fire","up",Math.min(8,Math.ceil(-dEt/2)),`风温低 ${Math.round(-dEt)}℃：火力上调 ${Math.min(8,Math.ceil(-dEt/2))}。`);
-    }else add("air","open",10,`风温高 ${Math.round(dEt)}℃：风门上调 10 带走多余热量。`);
-  }
-  if(inp.dev!=null && target.dev>0 && Math.abs(dDev)>3){
-    if(dDev<-3)add("process","—",0,`发展率 ${inp.dev}% 低于目标 ${target.dev}%：延长发展时间，勿急下豆。`);
-    else add("process","—",0,`发展率 ${inp.dev}% 高于目标 ${target.dev}%：提前下豆缩短发展。`);
-  }
-  if(inp.stir!=null && Math.abs(dStir)>8){
-    if(dStir<-8){
-      add("stir","up",Math.min(15,Math.ceil(-dStir/2)),
-        `搅拌低 ${Math.round(-dStir)}，翻滚偏弱 → 搅拌上调 ${Math.min(15,Math.ceil(-dStir/2))}。`);
-    }else{
-      add("stir","down",Math.min(15,Math.ceil(dStir/2)),
-        `搅拌高 ${Math.round(dStir)}，翻滚过强 → 搅拌下调 ${Math.min(15,Math.ceil(dStir/2))}。`);
-    }
   }
   if(!A.length)add("ok","—",0,"读数与目标吻合，保持当前设置。");
   return A;
@@ -1058,36 +975,27 @@ function setSize(g){
   refreshAll();renderM1Events();m1LiveResetBox();toast(`已切换至 ${g}g 方案 · 参数自动适配`);
 }
 
-/* 稳健绘制高清曲线图：即使在首次渲染或横屏缩放时容器宽度尚未稳定也可靠绘制 */
 function drawChart(){
   const wrap=document.getElementById("chartWrap");
   const cv=document.getElementById("chart");
   if(!cv||!curP||!BT)return;
   const ctx=cv.getContext("2d");
   if(!ctx)return;
-
   const dpr=Math.min(window.devicePixelRatio||1, 3);
   const rawW=wrap&&wrap.clientWidth?wrap.clientWidth-12:0;
   const cssW=rawW>120?rawW:Math.max(300,(window.innerWidth||640)-48);
   const cssH=Math.max(150,Math.round(cssW * 0.44));
-
-  cv.style.width=cssW+"px";
-  cv.style.height=cssH+"px";
-  cv.width=Math.round(cssW*dpr);
-  cv.height=Math.round(cssH*dpr);
+  cv.style.width=cssW+"px";cv.style.height=cssH+"px";
+  cv.width=Math.round(cssW*dpr);cv.height=Math.round(cssH*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
-
-  const W=cssW,H=cssH;
-  const L=36,R=34,T=18,B=24,pw=Math.max(60,W-L-R),ph=Math.max(60,H-T-B);
+  const W=cssW,H=cssH,L=36,R=34,T=18,B=24,pw=Math.max(60,W-L-R),ph=Math.max(60,H-T-B);
   const p=curP,tMax=Math.max(60,p.drop[0]+15),tMinT=80,tMaxT=230,rMax=30;
   const X=t=>L+clamp(t/tMax,0,1)*pw;
   const YT=temp=>T+ph-(clamp(temp,tMinT,tMaxT)-tMinT)/(tMaxT-tMinT)*ph;
   const YR=r=>T+ph-clamp(r,0,rMax)/rMax*ph;
 
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle="#fffdf7";
-  ctx.fillRect(0,0,W,H);
-
+  ctx.fillStyle="#fffdf7";ctx.fillRect(0,0,W,H);
   const bands=[[0,p.turn[0],"#f3ead2","回温"],[p.turn[0],p.yellow[0],"#efe4c8","干燥"],
     [p.yellow[0],p.fc[0],"#e8d3a0","梅拉德"],[p.fc[0],p.drop[0],"#dcbd82","发展"]];
   bands.forEach(([a,b,c,n])=>{
@@ -1096,7 +1004,6 @@ function drawChart(){
     ctx.fillStyle="#7d7466";ctx.font="9.5px sans-serif";ctx.textAlign="center";
     if(x2-x1>22)ctx.fillText(n,(x1+x2)/2,T+11);
   });
-
   ctx.strokeStyle="#e0d5b8";ctx.lineWidth=1;ctx.fillStyle="#7d7466";ctx.font="9.5px sans-serif";
   for(let temp=100;temp<=220;temp+=20){const y=YT(temp);
     ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(W-R,y);ctx.stroke();
@@ -1107,7 +1014,6 @@ function drawChart(){
   for(let t=0;t<=tMax;t+=stepSec){const x=X(t);
     ctx.strokeStyle="rgba(224,213,184,.55)";ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();
     ctx.fillStyle="#7d7466";ctx.fillText(fmt(t),x,H-7);}
-
   ctx.fillStyle="#6b4a2f";ctx.textAlign="left";ctx.font="bold 9.5px sans-serif";ctx.fillText("豆温℃",2,11);
   ctx.textAlign="right";ctx.fillStyle="#a61b1b";ctx.fillText("ROR",W-2,11);
 
@@ -1118,11 +1024,9 @@ function drawChart(){
   };
   drawCurve(t=>interp(p.power,t),v=>T+ph-v/100*ph,"#c5a059",1.5,[4,3]);
   drawCurve(t=>interp(p.air,t),v=>T+ph-v/100*ph,"#2e5c8a",1.5,[2,3]);
-
   ctx.beginPath();ctx.strokeStyle="#a61b1b";ctx.lineWidth=2.1;let started=false;
   for(let t=p.turn[0];t<=p.drop[0];t+=3){const x=X(t),y=YR(rorAt(t));started?ctx.lineTo(x,y):ctx.moveTo(x,y);started=true;}
   ctx.stroke();
-
   drawCurve(t=>etAt(t),YT,"#3a8a9a",1.7,[5,3]);
   drawCurve(t=>BT(t),YT,"#6b4a2f",2.6);
 
@@ -1134,31 +1038,6 @@ function drawChart(){
     ctx.fillStyle="#a61b1b";ctx.font="bold 9px sans-serif";ctx.textAlign="center";
     ctx.fillText(n,x,y-6);
   });
-
-  if(needSecondCrack()){
-    [["二爆",p.scStart],["二爆末",p.scEnd]].forEach(([n,[t,temp]])=>{
-      const x=X(Math.min(t,tMax)),y=YT(temp);
-      ctx.fillStyle="#7a3b8a";ctx.beginPath();ctx.arc(x,y,3.2,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle="#7a3b8a";ctx.font="8.5px sans-serif";ctx.textAlign="center";ctx.fillText(n,x,y-6);
-    });
-  }
-
-  if(m1Trace.length){
-    const tMaxT=p.drop[0];
-    const drawTrace=(key,toY,color)=>{
-      const pts=m1Trace.filter(z=>z[key]!=null).map(z=>[Math.min(z.t,tMaxT),z[key]]).sort((a,b)=>a[0]-b[0]);
-      if(!pts.length)return;
-      ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash([]);ctx.beginPath();
-      pts.forEach(([tt,vv],i)=>{const x=X(tt),y=toY(vv);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
-      pts.forEach(([tt,vv])=>{const x=X(tt),y=toY(vv);
-        ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,3.6,0,Math.PI*2);ctx.fill();
-        ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke();});
-    };
-    drawTrace("bt",YT,"#c0392b");
-    drawTrace("et",YT,"#1f8a99");
-    drawTrace("ror",YR,"#7a3b8a");
-  }
-
   if(simT>0||simRun){const x=X(simT);
     ctx.strokeStyle="#2b2b2b";ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();
     const y=YT(BT(simT));ctx.fillStyle="#2b2b2b";ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();}
@@ -1199,23 +1078,13 @@ const M1_EVENTS=[
   {key:"scE",    label:"二爆结束", at:p=>p.scEnd[0]},
   {key:"drop",   label:"下豆冷却", at:p=>p.drop[0]}
 ];
-let m1Marks={};
-let m1SimActive=false;
-let m1Manual={};
-let m1Trace=[];
-let m1KnobCustom={fire:false,air:false,target:false};
-let m1Confirmed={};
-let m1Await=null;
-let m1LastKey=null;
-let m1LoadedId=null;
+let m1Marks={},m1SimActive=false,m1Manual={},m1Trace=[],m1KnobCustom={fire:false,air:false,target:false};
+let m1Confirmed={},m1Await=null,m1LastKey=null,m1LoadedId=null;
 
 function m1Val(key,curveVal){return (m1Manual[key]!=null)?m1Manual[key]:curveVal;}
 function m1RefreshVals(){refreshDash();}
 function m1ActiveEvents(){return M1_EVENTS.filter(e=>needSecondCrack()||(e.key!=="scS"&&e.key!=="scE"));}
-function m1CalcAwait(){
-  for(const e of m1ActiveEvents()){if(!m1Confirmed[e.key])return e.key;}
-  return null;
-}
+function m1CalcAwait(){for(const e of m1ActiveEvents()){if(!m1Confirmed[e.key])return e.key;}return null;}
 function stirAt(t){
   const p=curP,tt=clamp(t,0,p.drop[0]);
   if(tt<=p.yellow[0])return 65;
@@ -1223,9 +1092,6 @@ function stirAt(t){
   return Math.round(57-(tt-p.fc[0])/Math.max(1,p.drop[0]-p.fc[0])*12);
 }
 
-function autoMarkEvents(){
-  // 取消自动打点：回温点改为在用户点击“回温点”按钮时，按当前实际烘焙时间记录
-}
 function renderM1Events(){
   const p=curP,sc=needSecondCrack();
   document.getElementById("m1Events").innerHTML=M1_EVENTS.map(e=>{
@@ -1282,14 +1148,11 @@ function m1OnRead(key,val){
   m1LastKey=key;
   const card=document.getElementById({bt:"cardBt",et:"cardEt",ror:"cardRor",dev:"cardDev",stir:"cardStir",target:"cardTarget"}[key]);
   if(card)card.classList.add("overridden");
-  m1RefreshVals();
-  m1LiveAdvise();
-  m1LogTrace();
-  drawChart();
+  m1RefreshVals();m1LiveAdvise();m1LogTrace();drawChart();
 }
 function m1OnClock(v){
   stopSim();simT=(+v/100)*curP.drop[0];
-  autoMarkEvents();m1RefreshVals();m1LiveAdvise();drawChart();
+  m1RefreshVals();m1LiveAdvise();drawChart();
 }
 function m1ClearRead(key){
   delete m1Manual[key];
@@ -1305,17 +1168,6 @@ function m1LogTrace(){
   const ex=m1Trace.findIndex(x=>Math.abs(x.t-cur.t)<3);
   if(ex>=0)m1Trace[ex]=cur;else m1Trace.push(cur);
   if(m1Trace.length>300)m1Trace.shift();
-}
-function pickKnobs(list){
-  const out=[];
-  ["fire","air","stir"].forEach(k=>{
-    const g=list.filter(a=>a.kind===k&&a.to!=null);
-    if(!g.length)return;
-    const base=g[0].from;
-    g.sort((a,b)=>Math.abs(b.to-(b.from==null?base:b.from))-Math.abs(a.to-(a.from==null?base:a.from)));
-    out.push(g[0]);
-  });
-  return out;
 }
 function m1TrendData(t){
   const p=curP,tt=clamp(t,0,p.drop[0]),back=Math.min(tt,25),pt=Math.max(0,tt-back);
@@ -1339,53 +1191,6 @@ function renderM1Trend(tg){
     cell("火力GAS",d.fire,"加大","减小")+cell("风门AIR",d.air,"开大","关小")+cell("搅拌STIR",d.stir,"加快","减慢");
 }
 function m1SingleLatestAdvice(tg,inp){
-  const k=m1LastKey;
-  if(k==="bt" && inp.bt!=null){
-    const d=inp.bt-tg.bt;
-    if(d<-3)return {kind:"fire",dir:"up",reason:`[豆温BT ${Math.round(inp.bt)}℃] 比目标低 ${Math.round(-d)}℃ → 火力上调 ${Math.min(8,Math.ceil(-d/2))} 或关小风门蓄热`};
-    if(d>3) return {kind:"fire",dir:"down",reason:`[豆温BT ${Math.round(inp.bt)}℃] 比目标高 ${Math.round(d)}℃ → 火力下调 ${Math.min(8,Math.ceil(d/2))} 并开大风门`};
-    return {kind:"ok",dir:"—",reason:`[豆温BT ${Math.round(inp.bt)}℃] 与目标 ${tg.bt}℃ 吻合，保持当前节奏`};
-  }
-  if(k==="et" && inp.et!=null){
-    const d=inp.et-tg.et;
-    if(d<-5)return {kind:"fire",dir:"up",reason:`[风温ENV ${Math.round(inp.et)}℃] 比目标低 ${Math.round(-d)}℃ → 火力上调 ${Math.min(8,Math.ceil(-d/2))} 补充热风`};
-    if(d>5) return {kind:"air",dir:"open",reason:`[风温ENV ${Math.round(inp.et)}℃] 比目标高 ${Math.round(d)}℃ → 风门上调 10 带走多余热量`};
-    return {kind:"ok",dir:"—",reason:`[风温ENV ${Math.round(inp.et)}℃] 与目标 ${tg.et}℃ 吻合，保持当前设置`};
-  }
-  if(k==="ror" && inp.ror!=null){
-    const d=inp.ror-tg.ror;
-    if(d<-1.5)return {kind:"fire",dir:"up",reason:`[ROR ${(+inp.ror).toFixed(1)}] 偏低 ${(-d).toFixed(1)} 防 Crash → 火力上调 2 或风门下调 10`};
-    if(d>1.5) return {kind:"air",dir:"open",reason:`[ROR ${(+inp.ror).toFixed(1)}] 偏高 +${d.toFixed(1)} 防 Flick → 风门上调 10 或火力下调 2`};
-    return {kind:"ok",dir:"—",reason:`[ROR ${(+inp.ror).toFixed(1)}] 升温速率平稳（目标 ${tg.ror}），保持当前`};
-  }
-  if(k==="dev" && inp.dev!=null){
-    const d=inp.dev-tg.dev;
-    if(d<-2)return {kind:"process",dir:"—",reason:`[发展率 ${Math.round(inp.dev)}%] 偏低 ${Math.round(-d)}% → 延长发展时间，勿急下豆`};
-    if(d>2) return {kind:"process",dir:"—",reason:`[发展率 ${Math.round(inp.dev)}%] 偏高 +${Math.round(d)}% → 提前下豆避免过苦`};
-    return {kind:"ok",dir:"—",reason:`[发展率 ${Math.round(inp.dev)}%] 与目标 ${tg.dev}% 吻合，按计划推进`};
-  }
-  if(k==="stir" && inp.stir!=null){
-    const d=inp.stir-tg.stir;
-    if(d<-5)return {kind:"stir",dir:"up",reason:`[搅拌 ${Math.round(inp.stir)}] 偏低 ${Math.round(-d)} → 搅拌上调 ${Math.min(15,Math.ceil(-d/2))} 增强翻滚`};
-    if(d>5) return {kind:"stir",dir:"down",reason:`[搅拌 ${Math.round(inp.stir)}] 偏高 +${Math.round(d)} → 搅拌下调 ${Math.min(15,Math.ceil(d/2))} 防碎豆`};
-    return {kind:"ok",dir:"—",reason:`[搅拌 ${Math.round(inp.stir)}] 与目标 ${tg.stir} 吻合，保持当前转速`};
-  }
-  if(k==="target"){
-    const tv=m1Manual.target!=null?m1Manual.target:curP.targetBean;
-    return {kind:"ok",dir:"—",reason:`[目标豆温] 已调整为 ${Math.round(tv)}℃，到达该温度即下豆冷却`};
-  }
-  if(k==="fire" && inp.fire!=null){
-    const d=inp.fire-tg.fire;
-    if(d<-4)return {kind:"fire",dir:"up",reason:`[火力GAS ${Math.round(inp.fire)}] 低于曲线 ${Math.round(-d)} → 建议火力上调 ${Math.min(10,Math.ceil(-d/2))}`};
-    if(d>4) return {kind:"fire",dir:"down",reason:`[火力GAS ${Math.round(inp.fire)}] 高于曲线 +${Math.round(d)} → 建议火力下调 ${Math.min(10,Math.ceil(d/2))}`};
-    return {kind:"ok",dir:"—",reason:`[火力GAS ${Math.round(inp.fire)}] 符合当前阶段目标（${tg.fire}）`};
-  }
-  if(k==="air" && inp.air!=null){
-    const d=inp.air-tg.air;
-    if(d<-8)return {kind:"air",dir:"open",reason:`[风门AIR ${Math.round(inp.air)}] 低于曲线 ${Math.round(-d)} → 建议风门上调 ${Math.min(20,Math.ceil(-d/5)*5)}`};
-    if(d>8) return {kind:"air",dir:"close",reason:`[风门AIR ${Math.round(inp.air)}] 高于曲线 +${Math.round(d)} → 建议风门下调 ${Math.min(20,Math.ceil(d/5)*5)}`};
-    return {kind:"ok",dir:"—",reason:`[风门AIR ${Math.round(inp.air)}] 符合当前阶段目标（${tg.air}）`};
-  }
   const all=advise(tg,inp);
   return all[0]||{kind:"ok",dir:"—",reason:"各项读数与目标吻合，保持当前设置"};
 }
@@ -1408,14 +1213,11 @@ function m1LiveAdvise(){
     a.kind==="air"?`风门${a.dir==="open"?"↑开大":"↓关小"}`:
     a.kind==="stir"?`搅拌${a.dir==="up"?"↑加快":"↓减慢"}`:"策略";
   box.innerHTML=`<div class="lrow ${cls}"><span class="li">${ic}</span><span><b>${head}</b> · ${a.reason}</span></div>`;
-  const cntEl=document.getElementById("m1LiveCnt");
-  if(cntEl)cntEl.textContent="（最新一条）";
 }
 function m1LiveResetBox(){
   const box=document.getElementById("m1LiveBody");
   if(box)box.innerHTML='<div class="lempty">点「▶ 放豆/开始」显示每步火/风/搅趋势；拖滑杆录实机值给出精确修正。</div>';
   const st=document.getElementById("m1LiveStage");if(st)st.textContent="待机 · 入豆后启用";
-  const cntEl=document.getElementById("m1LiveCnt");if(cntEl)cntEl.textContent="";
   const tr=document.getElementById("m1Trend");if(tr)tr.style.display="none";
 }
 function m1UpdateHint(){
@@ -1425,40 +1227,34 @@ function m1UpdateHint(){
   if(!m1Await)return;
   const p=curP,ev=M1_EVENTS.find(e=>e.key===m1Await);
   const el=document.getElementById("m1ev_"+m1Await);
-  if(el&&ev){el.classList.add("blink");el.title=`下一步：设备出现「${ev.label}」后点此确认（约 ${fmt(ev.at(p))}）`;}
+  if(el&&ev){el.classList.add("blink");el.title=`下一步：设备出现「${ev.label}」后点此确认`;}
 }
 function m1Mark(key){
   if((key==="scS"||key==="scE")&&!needSecondCrack())return;
-  const p=curP;
-  const ev=M1_EVENTS.find(e=>e.key===key);
-  const lbl=ev?ev.label:key;
-  const actualSec=Math.round(simT);
-  m1Marks[key]=actualSec;
-  m1Confirmed[key]=true;
+  const p=curP,ev=M1_EVENTS.find(e=>e.key===key),lbl=ev?ev.label:key,actualSec=Math.round(simT);
+  m1Marks[key]=actualSec;m1Confirmed[key]=true;
   const el=document.getElementById("m1ev_"+key);
   if(el){el.classList.add("on");el.classList.remove("blink");const tm=el.querySelector(".tm");if(tm)tm.textContent=fmt(actualSec);}
   m1Await=m1CalcAwait();
-  const nx=m1Await?M1_EVENTS.find(e=>e.key===m1Await):null;
-  toast(`已记录「${lbl}」实际时间 ${fmt(actualSec)}${nx?` · 下一步「${nx.label}」闪烁`:" · 全部节点已确认"}`);
+  syncDtCalculator();
+  toast(`已记录「${lbl}」实际时间 ${fmt(actualSec)}`);
   refreshM1(simT,0,0,Math.round(BT(simT)),etAt(simT),rorAt(simT),devRateAt(simT));
   m1UpdateHint();m1LiveAdvise();
 }
 function m1SetMode(m){
   document.getElementById("m1modeManual").classList.toggle("on",m==="manual");
   document.getElementById("m1modeAuto").classList.toggle("on",m==="auto");
-  toast(m==="auto"?"自动烘焙模式":"手动烘焙模式");
 }
 function m1Step(kind,d){
   const id=kind==="fire"?"m1Fire":kind==="air"?"m1Air":"m1Tgt";
   const el=document.getElementById(id);let v=+el.value||0;
   v=clamp(v+d,kind==="target"?80:0,kind==="target"?250:100);
-  el.value=v;
-  m1LastKey=kind;
-  if(kind==="target"){m1Manual.target=v;m1KnobCustom.target=true;const c=document.getElementById("cardTarget");if(c)c.classList.add("overridden");refreshM1(simT,0,0,Math.round(BT(simT)),etAt(simT),rorAt(simT),devRateAt(simT));toast("目标豆温设为 "+v+"℃");}
-  else{m1KnobCustom[kind]=true;toast((kind==="fire"?"火力值 ":"风门值 ")+("设为 "+v));}
+  el.value=v;m1LastKey=kind;
+  if(kind==="target"){m1Manual.target=v;m1KnobCustom.target=true;const c=document.getElementById("cardTarget");if(c)c.classList.add("overridden");refreshM1(simT,0,0,Math.round(BT(simT)),etAt(simT),rorAt(simT),devRateAt(simT));}
+  else{m1KnobCustom[kind]=true;}
   m1LiveAdvise();
 }
-function m1Pause(){toast("火力暂停");if(simRun)stopSim();}
+function m1Pause(){if(simRun)stopSim();toast("火力已暂停");}
 
 function m1StartRoast(){
   m1Marks={};m1Manual={};m1Trace=[];m1SimActive=true;m1KnobCustom={fire:false,air:false,target:false};
@@ -1467,255 +1263,94 @@ function m1StartRoast(){
   document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
   renderM1Events();
   if(simT>=curP.drop[0])simT=0;
-  startSim();
-  m1UpdateHint();
-  toast("放豆成功：总计时已启动 → 回温点闪烁");
-  m1LiveAdvise();
+  startSim();m1UpdateHint();toast("放豆成功：总计时已启动");m1LiveAdvise();
 }
 function m1Drop(){
-  const p=curP;
-  m1Marks.drop=simT<10?p.drop[0]:Math.round(simT);
+  const p=curP;m1Marks.drop=simT<10?p.drop[0]:Math.round(simT);
   m1Confirmed.drop=true;m1Await=m1CalcAwait();
-  m1SimActive=false;
-  resetSim();
+  m1SimActive=false;resetSim();
   const lbl=document.getElementById("m1ev_drop");if(lbl){lbl.classList.add("on");lbl.classList.remove("blink");const tm=lbl.querySelector(".tm");if(tm)tm.textContent=fmt(m1Marks.drop);}
+  syncDtCalculator();
   refreshM1(0,0,0,Math.round(BT(0)),etAt(0),rorAt(0),0);
-  m1LiveResetBox();
-  document.querySelectorAll(".m1-ev.blink,.m1-acts button.blink").forEach(e=>e.classList.remove("blink"));
-  toast("下豆冷却：记录于 "+fmt(m1Marks.drop));
+  m1LiveResetBox();toast("下豆冷却已记录");
 }
 function fallbackCopy(txt){
-  const ta=document.createElement("textarea");
-  ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+  const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
   document.body.appendChild(ta);ta.focus();ta.select();
-  try{document.execCommand("copy");toast("已复制到剪贴板");}
-  catch(e){toast("复制失败，请手动选择");}
-  ta.remove();
+  try{document.execCommand("copy");toast("已复制到剪贴板");}catch(e){}ta.remove();
 }
 
 const CURVE_HIST_KEY="coffeeRoastSavedCurves_v1";
 let _memCurveHist=[];
 function loadCurveHist(){
-  try{
-    const raw=localStorage.getItem(CURVE_HIST_KEY);
-    if(raw){_memCurveHist=JSON.parse(raw);return _memCurveHist;}
-  }catch(e){}
+  try{const raw=localStorage.getItem(CURVE_HIST_KEY);if(raw){_memCurveHist=JSON.parse(raw);return _memCurveHist;}}catch(e){}
   return _memCurveHist;
 }
 function saveCurveHist(arr){
-  _memCurveHist=arr;
-  try{localStorage.setItem(CURVE_HIST_KEY,JSON.stringify(arr));return true;}
-  catch(e){return false;}
-}
-function formatCurveText(rec){
-  const marksTxt=rec.marks&&Object.keys(rec.marks).length
-    ?Object.keys(rec.marks).map(k=>{
-      const ev=M1_EVENTS.find(e=>e.key===k);
-      return (ev?ev.label:k)+" "+fmt(rec.marks[k]);
-    }).join(" · ")
-    :"无";
-  return `【狙击手M1 · ${rec.beanName}】${rec.grams}g（${rec.modeLabel}）\n`+
-    `保存时间 ${new Date(rec.savedAt).toLocaleString("zh-CN")} | 停止时刻 ${fmt(rec.stopT)}\n`+
-    `目标豆温 ${rec.targetBean}℃ | 总时长 ${fmt(rec.totalSec)}\n`+
-    `注入 00:00 · 回温 ${rec.turnText} · 转黄 ${rec.yellowText}\n`+
-    `一爆 ${rec.fcText} → 结束 ${rec.fcEndText}（计时 ${rec.fcTimerText}）\n`+
-    (rec.scText?`二爆 ${rec.scText} → 结束 ${rec.scEndText}（计时 ${rec.scTimerText}）\n`:"")+
-    `下豆 ${rec.dropText} | 发展率 ${rec.dtr}%\n`+
-    `实际标注：${marksTxt}`;
+  _memCurveHist=arr;try{localStorage.setItem(CURVE_HIST_KEY,JSON.stringify(arr));return true;}catch(e){return false;}
 }
 function renderCurveHist(){
   const list=loadCurveHist();
   const cnt=document.getElementById("m1HistCnt");if(cnt)cnt.textContent=list.length;
   const box=document.getElementById("m1HistList");if(!box)return;
-  if(!list.length){
-    box.innerHTML='<div class="hempty">暂无保存的曲线记录，点「保存曲线」即可存入本地。</div>';
-    return;
-  }
+  if(!list.length){box.innerHTML='<div class="hempty">暂无保存的曲线记录，点「保存曲线」即可存入本地。</div>';return;}
   box.innerHTML=list.map(r=>{
     const mCount=r.marks?Object.keys(r.marks).length:0;
     const dropVal=r.dropText.split("/")[1]||r.dropText;
-    const tmStr=new Date(r.savedAt).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
     const isLoaded=m1LoadedId===r.id;
-    const loadBtn=isLoaded
-      ?`<button type="button" style="background:var(--cinnabar);border-color:var(--cinnabar);color:#fff;font-weight:600" onclick="m1UnloadCurve()">取消加载</button>`
-      :`<button type="button" style="border-color:var(--gold);color:#ffd479" onclick="loadCurveHistById('${r.id}')">加载</button>`;
-    return `<div class="hrow" style="${isLoaded?"border-color:var(--gold);background:#302b22":""}"><div class="hinfo">${isLoaded?'<span style="color:#7fd1a8;font-weight:700">[当前] </span>':''}<b>${r.beanName}</b> · ${r.grams}g · ${r.modeLabel} · 下豆${dropVal} · 标注${mCount}个 <span style="color:#9a9182">(${tmStr})</span></div>`+
-      `<div class="hbtns">${loadBtn}`+
-      `<button type="button" onclick="openCurveHistDetail('${r.id}')">查看</button>`+
-      `<button type="button" onclick="copyCurveHistById('${r.id}')">复制</button>`+
-      `<button type="button" onclick="deleteCurveHistById('${r.id}')">删</button></div></div>`;
+    const loadBtn=isLoaded?`<button type="button" style="background:var(--cinnabar);border-color:var(--cinnabar);color:#fff;font-weight:600" onclick="m1UnloadCurve()">取消加载</button>`:`<button type="button" style="border-color:var(--gold);color:#ffd479" onclick="loadCurveHistById('${r.id}')">加载</button>`;
+    return `<div class="hrow" style="${isLoaded?"border-color:var(--gold);background:#302b22":""}"><div class="hinfo">${isLoaded?'<span style="color:#7fd1a8;font-weight:700">[当前] </span>':''}<b>${r.beanName}</b> · ${r.grams}g · ${r.modeLabel}</div>`+
+      `<div class="hbtns">${loadBtn}<button type="button" onclick="deleteCurveHistById('${r.id}')">删</button></div></div>`;
   }).join("");
-}
-function openCurveHistDetail(id){
-  const r=loadCurveHist().find(x=>x.id===id);
-  if(!r)return;
-  const markItems=r.marks&&Object.keys(r.marks).length
-    ?Object.keys(r.marks).map(k=>{
-      const ev=M1_EVENTS.find(e=>e.key===k);
-      return `<tr><td class="k">${ev?ev.label:k}</td><td>${fmt(r.marks[k])}</td></tr>`;
-    }).join("")
-    :'<tr><td colspan="2" class="hint">未手动标注事件</td></tr>';
-  const tracePts=r.trace&&r.trace.length
-    ?r.trace.filter((_,idx)=>idx%Math.max(1,Math.floor(r.trace.length/12))===0).map(pt=>
-      `<tr><td class="k">${fmt(pt.t)}</td><td>豆 ${Math.round(pt.bt)}℃ / 风 ${Math.round(pt.et)}℃</td><td>ROR ${(+pt.ror).toFixed(1)}</td></tr>`
-    ).join("")
-    :'<tr><td colspan="3" class="hint">无实机滑杆打点轨迹</td></tr>';
-  document.getElementById("curveHistBody").innerHTML=`
-    <span class="x" onclick="closeCurveHistModal()">×</span>
-    <h3>保存的曲线记录</h3><div class="en">SAVED ROAST CURVE · ${r.beanName}</div>
-    <div class="advice"><b>${r.beanName}</b> · <b>${r.grams}g</b> · <b>${r.modeLabel}</b><br>
-      <span class="hint">保存时间：${new Date(r.savedAt).toLocaleString("zh-CN")} · 记录时刻：${fmt(r.stopT)}</span></div>
-    <div class="hint" style="margin:8px 0 4px">核心节点参数：</div>
-    <table class="mini">
-      <tr><th style="width:32%">节点</th><th>记录/目标</th></tr>
-      <tr><td class="k">目标豆温 / 总时长</td><td>${r.targetBean}℃ / ${fmt(r.totalSec)}</td></tr>
-      <tr><td class="k">回温点</td><td>${r.turnText}</td></tr>
-      <tr><td class="k">转黄</td><td>${r.yellowText}</td></tr>
-      <tr><td class="k">一爆开始 → 结束</td><td>${r.fcText} → ${r.fcEndText}（${r.fcTimerText}）</td></tr>
-      ${r.scText?`<tr><td class="k">二爆开始 → 结束</td><td>${r.scText} → ${r.scEndText}（${r.scTimerText}）</td></tr>`:""}
-      <tr><td class="k">下豆 / 发展率</td><td>${r.dropText} · ${r.dtr}%</td></tr>
-    </table>
-    <div class="hint" style="margin:8px 0 4px">事件标注记录：</div>
-    <table class="mini"><tr><th style="width:32%">事件</th><th>时刻</th></tr>${markItems}</table>
-    <div class="hint" style="margin:8px 0 4px">实机滑杆采样轨迹：</div>
-    <table class="mini"><tr><th>时刻</th><th>豆温/风温</th><th>ROR</th></tr>${tracePts}</table>
-    <div class="modal-btns">
-      <button type="button" class="go" style="background:var(--green)" onclick="loadCurveHistById('${r.id}');closeCurveHistModal()">加载到模拟器</button>
-      <button type="button" class="go ghost" onclick="copyCurveHistById('${r.id}')">复制记录</button>
-    </div>`;
-  document.getElementById("curveHistMask").classList.add("show");
-}
-function closeCurveHistModal(){document.getElementById("curveHistMask").classList.remove("show");}
-document.getElementById("curveHistMask").addEventListener("click",e=>{if(e.target.id==="curveHistMask")closeCurveHistModal();});
-function copyCurveHistById(id){
-  const r=loadCurveHist().find(x=>x.id===id);
-  if(!r)return;
-  const txt=formatCurveText(r);
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(()=>toast("已复制该条曲线记录")).catch(()=>fallbackCopy(txt));
-  }else fallbackCopy(txt);
 }
 function deleteCurveHistById(id){
   const next=loadCurveHist().filter(x=>x.id!==id);
-  saveCurveHist(next);renderCurveHist();toast("已删除该条曲线记录");
+  saveCurveHist(next);renderCurveHist();toast("已删除");
 }
 function loadCurveHistById(id){
-  const r=loadCurveHist().find(x=>x.id===id);
-  if(!r){toast("未找到该条曲线记录");return;}
+  const r=loadCurveHist().find(x=>x.id===id);if(!r)return;
   stopSim();
   const matchedBean=BEANS.find(b=>b.id===r.beanId)||BEANS.find(b=>b.name===r.beanName);
   if(matchedBean)curBean=matchedBean;
-  if([50,100,200].includes(+r.grams)){
-    curG=+r.grams;
-    document.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on",+b.dataset.g===curG));
-  }
-  const modeMap={"浅烘":"light","中烘":"medium","深烘":"dark"};
-  if(r.modeLabel&&modeMap[r.modeLabel]){
-    roastMode=modeMap[r.modeLabel];
-    const msel=document.getElementById("roastMode");if(msel)msel.value=roastMode;
-  }
-  buildP();
-  if(r.targetBean)curP.targetBean=+r.targetBean;
-  makeBT();
+  if([50,100,200].includes(+r.grams)){curG=+r.grams;document.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on",+b.dataset.g===curG));}
+  buildP();if(r.targetBean)curP.targetBean=+r.targetBean;makeBT();
 
   m1Marks=Object.assign({},r.marks||{});
-  m1Confirmed={};
-  Object.keys(m1Marks).forEach(k=>{m1Confirmed[k]=true;});
+  m1Confirmed={};Object.keys(m1Marks).forEach(k=>{m1Confirmed[k]=true;});
   m1Await=m1CalcAwait();
   m1Trace=Array.isArray(r.trace)?r.trace.map(pt=>Object.assign({},pt)):[];
-  m1Manual={};
-  m1KnobCustom={fire:false,air:false,target:false};
+  m1Manual={};m1KnobCustom={fire:false,air:false,target:false};
   document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
-
-  if(m1Trace.length){
-    const lastPt=m1Trace[m1Trace.length-1];
-    if(lastPt.bt!=null){m1Manual.bt=lastPt.bt;const c=document.getElementById("cardBt");if(c)c.classList.add("overridden");}
-    if(lastPt.et!=null){m1Manual.et=lastPt.et;const c=document.getElementById("cardEt");if(c)c.classList.add("overridden");}
-    if(lastPt.ror!=null){m1Manual.ror=lastPt.ror;const c=document.getElementById("cardRor");if(c)c.classList.add("overridden");}
-    if(lastPt.stir!=null){m1Manual.stir=lastPt.stir;const c=document.getElementById("cardStir");if(c)c.classList.add("overridden");}
-  }
-  if(r.targetBean){
-    m1Manual.target=+r.targetBean;
-    const ct=document.getElementById("cardTarget");if(ct)ct.classList.add("overridden");
-  }
-
+  
   simT=clamp(+r.stopT||0,0,curP.drop[0]);
-  m1SimActive=true;
-  m1LoadedId=r.id;
-  m1LastKey=m1Trace.length?"bt":null;
-  updateLoadedUi(r.beanName);
-  renderCurveHist();
-  renderBeans();
-  renderM1Events();
-  refreshAll();
-  m1LiveAdvise();
-  const panel=document.getElementById("m1Panel");
-  if(panel)panel.scrollIntoView({behavior:"smooth",block:"start"});
-  toast(`已加载「${r.beanName} · ${r.grams}g · ${r.modeLabel}」，点「取消加载」或「复位」可清除`);
+  m1SimActive=true;m1LoadedId=r.id;
+  renderCurveHist();renderBeans();renderM1Events();refreshAll();m1LiveAdvise();
+  syncDtCalculator();
+  toast(`已加载「${r.beanName}」，点「取消加载」或「复位」可清除`);
 }
-function updateLoadedUi(beanName){
-  const btn=document.getElementById("m1UnloadBtn");
-  const badge=document.getElementById("m1LoadedBadge");
-  if(m1LoadedId){
-    if(btn)btn.style.display="inline-block";
-    if(badge){badge.style.display="inline";badge.textContent=`[已加载: ${beanName||"历史曲线"}]`;}
-  }else{
-    if(btn)btn.style.display="none";
-    if(badge){badge.style.display="none";badge.textContent="";}
-  }
-}
-function m1UnloadCurve(){
-  m1Reset();
-  toast("已清除加载的历史曲线，面板已恢复默认");
-}
-function m1ClearHist(){
-  if(!loadCurveHist().length){toast("暂无曲线记录可清空");return;}
-  saveCurveHist([]);renderCurveHist();toast("已清空全部保存的曲线记录");
-}
+function m1UnloadCurve(){m1Reset();toast("已清除加载");}
+function m1ClearHist(){saveCurveHist([]);renderCurveHist();toast("已清空");}
 function m1Save(){
-  const p=curP;
-  const rec={
-    id:"cv_"+Date.now()+"_"+Math.random().toString(36).slice(2,6),
-    savedAt:Date.now(),
-    stopT:Math.round(simT),
-    beanId:curBean.id,
-    beanName:curBean.name,
-    grams:curG,
-    modeLabel:modeName(),
-    targetBean:p.targetBean,
-    totalSec:p.drop[0],
-    turnText:`${fmt(p.turn[0])}/${p.turn[1]}℃`,
-    yellowText:`${fmt(p.yellow[0])}/${p.yellow[1]}℃`,
-    fcText:`${fmt(p.fc[0])}/${p.fc[1]}℃`,
-    fcEndText:`${fmt(p.fcEnd[0])}/${p.fcEnd[1]}℃`,
-    fcTimerText:fmt(p.fcTimer),
-    scText:needSecondCrack()?`${fmt(p.scStart[0])}/${p.scStart[1]}℃`:"",
-    scEndText:needSecondCrack()?`${fmt(p.scEnd[0])}/${p.scEnd[1]}℃`:"",
-    scTimerText:needSecondCrack()?fmt(p.scTimer):"",
-    dropText:`${fmt(p.drop[0])}/${p.drop[1]}℃`,
-    dtr:p.dtr,
-    marks:Object.assign({},m1Marks),
-    trace:m1Trace.slice(-60)
-  };
-  const hist=loadCurveHist();
-  hist.unshift(rec);
-  if(hist.length>30)hist.length=30;
-  saveCurveHist(hist);
-  renderCurveHist();
-
-  const txt=formatCurveText(rec);
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(()=>toast("已保存曲线记录并复制到剪贴板")).catch(()=>fallbackCopy(txt));
-  }else fallbackCopy(txt);
+  const p=curP,rec={id:"cv_"+Date.now(),savedAt:Date.now(),stopT:Math.round(simT),
+    beanId:curBean.id,beanName:curBean.name,grams:curG,modeLabel:modeName(),
+    targetBean:p.targetBean,totalSec:p.drop[0],dropText:`${fmt(p.drop[0])}/${p.drop[1]}℃`,
+    dtr:p.dtr,marks:Object.assign({},m1Marks),trace:m1Trace.slice(-60)};
+  const hist=loadCurveHist();hist.unshift(rec);if(hist.length>30)hist.length=30;
+  saveCurveHist(hist);renderCurveHist();toast("已保存曲线记录");
 }
 function m1Reset(){
   stopSim();simT=0;m1Marks={};m1Manual={};m1Trace=[];m1SimActive=false;m1KnobCustom={fire:false,air:false,target:false};
   m1Confirmed={};m1Await=null;m1LastKey=null;m1LoadedId=null;
-  updateLoadedUi("");
   renderCurveHist();
   document.querySelectorAll(".m1-read.overridden").forEach(e=>e.classList.remove("overridden"));
   document.querySelectorAll(".m1-ev.blink,.m1-acts button.blink").forEach(e=>e.classList.remove("blink"));
   renderM1Events();refreshDash();drawChart();m1LiveResetBox();
+  
+  document.getElementById('calcFcMin').value = '';
+  document.getElementById('calcFcSec').value = '';
+  document.getElementById('calcTotalMin').value = '';
+  document.getElementById('calcTotalSec').value = '';
+  runDtCalc();runDtCalcRev();
   toast("面板已复位");
 }
 
@@ -1806,17 +1441,14 @@ function showDefect(){
   el.innerHTML=`<b style="color:var(--cinnabar)">${DEFECTS[v][0]}</b><br><br>${DEFECTS[v][1]}`;
 }
 
-/* 兼容 requestAnimationFrame 与 setInterval 双驱动计时器，确保任何 WebView 环境下时间均稳定走动 */
-function toggleSim(){simRun?stopSim():startSim();}
 let _m1AdvSec=-1,_simInterval=null,_simLastEpochMs=0;
 function _nowMs(){return Date.now();}
+function toggleSim(){simRun?stopSim():startSim();}
 function _advanceClockByDelta(dtSec){
   if(!simRun||!curP)return;
   const maxT=Math.max(10,curP.drop[0]);
   simT=Math.min(maxT,simT+Math.max(0,dtSec));
-  autoMarkEvents();
-  refreshDash();
-  drawChart();
+  refreshDash();drawChart();
   const sec=Math.floor(simT);
   if(sec!==_m1AdvSec){_m1AdvSec=sec;m1LiveAdvise();}
   if(simT>=maxT){stopSim();}
@@ -1824,34 +1456,22 @@ function _advanceClockByDelta(dtSec){
 function startSim(){
   if(!curP){buildP();makeBT();}
   if(simT>=curP.drop[0])simT=0;
-  stopSim();
-  m1SimActive=true;
-  simRun=true;
+  stopSim();m1SimActive=true;simRun=true;
   const btn=document.getElementById("simBtn");if(btn)btn.textContent="⏸ 暂停";
   const stBtn=document.getElementById("m1StartBtn");if(stBtn)stBtn.textContent="⏸ 计时中";
   _simLastEpochMs=_nowMs();
   refreshDash();
-
   const rafStep=()=>{
     if(!simRun)return;
-    const now=_nowMs();
-    const dt=(now-_simLastEpochMs)/1000;
-    if(dt>=0.05){
-      _simLastEpochMs=now;
-      _advanceClockByDelta(dt);
-    }
+    const now=_nowMs(),dt=(now-_simLastEpochMs)/1000;
+    if(dt>=0.05){_simLastEpochMs=now;_advanceClockByDelta(dt);}
     if(simRun)simRAF=requestAnimationFrame(rafStep);
   };
   simRAF=requestAnimationFrame(rafStep);
-
   _simInterval=setInterval(()=>{
     if(!simRun)return;
-    const now=_nowMs();
-    const dt=(now-_simLastEpochMs)/1000;
-    if(dt>=0.2){
-      _simLastEpochMs=now;
-      _advanceClockByDelta(dt);
-    }
+    const now=_nowMs(),dt=(now-_simLastEpochMs)/1000;
+    if(dt>=0.2){_simLastEpochMs=now;_advanceClockByDelta(dt);}
   },250);
 }
 function stopSim(){
@@ -1862,7 +1482,7 @@ function stopSim(){
   const sb=document.getElementById("m1StartBtn");if(sb)sb.textContent="▶ 放豆/开始";
 }
 function resetSim(){stopSim();simT=0;_m1AdvSec=-1;refreshDash();drawChart();}
-function onScrub(v){stopSim();simT=(+v/100)*Math.max(1,curP.drop[0]);autoMarkEvents();refreshDash();drawChart();m1LiveAdvise();}
+function onScrub(v){stopSim();simT=(+v/100)*Math.max(1,curP.drop[0]);refreshDash();drawChart();m1LiveAdvise();}
 
 function surveyDefault(){return {aroma:"",acidity:"",sweet:"",body:"",defects:[],sat:0,
   agActual:"",dropActual:"",devActual:"",wlActual:"",applyVariety:false};}
@@ -1979,7 +1599,6 @@ function submitSurvey(){
   const ok=saveCalib(cal);
   closeSurvey();buildP();makeBT();refreshAll();renderBeans();renderCalib();
   toast(ok?`已保存校准：${note}`:"校准已应用");
-  setTimeout(()=>openCalibDetail(b.id),350);
 }
 
 function renderCalib(){
@@ -1990,35 +1609,9 @@ function renderCalib(){
     const b=BEANS.find(x=>x.id===id)||{name:id},c=cal[id];
     return `<div class="calib-row"><div style="flex:1;min-width:0"><div class="nm">${b.name}</div>
       <div class="ds">第 ${c.sessions||1} 次 · ${c.note||""}</div></div>
-      <div style="display:flex;gap:6px;flex:none"><button type="button" class="btn ghost sm" onclick="openCalibDetail('${id}')">查看</button>
-      <button type="button" class="btn ghost sm" onclick="removeCalib('${id}')">删除</button></div></div>`;
+      <div style="display:flex;gap:6px;flex:none"><button type="button" class="btn ghost sm" onclick="removeCalib('${id}')">删除</button></div></div>`;
   }).join("");
 }
-function openCalibDetail(id){
-  const b=BEANS.find(x=>x.id===id),c=loadCalib()[id];
-  if(!b||!c)return;
-  const p200=scaleProfile(getBase(b),200),p100=scaleProfile(getBase(b),100),p50=scaleProfile(getBase(b),50);
-  document.getElementById("calibModalBody").innerHTML=`
-    <span class="x" onclick="closeCalibModal()">×</span>
-    <h3>${b.name} · 烘焙校准</h3><div class="en">CALIBRATION PROFILE</div>
-    <div class="advice"><b class="ok">已应用修正</b>：${c.note||""}<br>
-      <span class="hint">第 ${c.sessions||1} 次反馈 · ${new Date(c.lastAt).toLocaleString("zh-CN")}</span></div>
-    <div class="hint" style="margin:10px 0 6px">修正后三档关键参数：</div>
-    <table class="mini"><tr><th>参数</th><th>200g</th><th>100g</th><th>50g</th></tr>
-      <tr><td class="k">入豆温度</td><td>${p200.charge}℃</td><td>${p100.charge}℃</td><td>${p50.charge}℃</td></tr>
-      <tr><td class="k">一爆</td><td>${fmt(p200.fc[0])}/${p200.fc[1]}℃</td><td>${fmt(p100.fc[0])}/${p100.fc[1]}℃</td><td>${fmt(p50.fc[0])}/${p50.fc[1]}℃</td></tr>
-      <tr><td class="k">下豆</td><td>${fmt(p200.drop[0])}/${p200.drop[1]}℃</td><td>${fmt(p100.drop[0])}/${p100.drop[1]}℃</td><td>${fmt(p50.drop[0])}/${p50.drop[1]}℃</td></tr>
-      <tr><td class="k">发展/DTR</td><td>${fmt(p200.dev)}/${p200.dtr}%</td><td>${fmt(p100.dev)}/${p100.dtr}%</td><td>${fmt(p50.dev)}/${p50.dtr}%</td></tr>
-      <tr><td class="k">Agtron</td><td>${c.ag||b.ag}</td><td>${c.ag||b.ag}</td><td>${(c.ag||b.ag)+1}</td></tr>
-    </table>
-    <div class="modal-btns">
-      <button type="button" class="go ghost" onclick="removeCalib('${id}');closeCalibModal()">删除校准</button>
-      <button type="button" class="go" onclick="closeCalibModal()">关闭</button>
-    </div>`;
-  document.getElementById("calibMask").classList.add("show");
-}
-function closeCalibModal(){document.getElementById("calibMask").classList.remove("show");}
-document.getElementById("calibMask").addEventListener("click",e=>{if(e.target.id==="calibMask")closeCalibModal();});
 function removeCalib(id){
   const cal=loadCalib();delete cal[id];saveCalib(cal);
   if(curBean.id===id){buildP();makeBT();refreshAll();renderBeans();}
@@ -2028,22 +1621,7 @@ function clearAllCalib(){
   if(!confirm("确定清空全部烘焙校准？此操作不可恢复。"))return;
   saveCalib({});buildP();makeBT();refreshAll();renderBeans();renderCalib();toast("已清空全部校准");
 }
-
-function copyParams(){
-  const b=curBean,p=curP,cal=loadCalib()[b.id];
-  const txt=`【${b.name}】${curG}g 烘焙参数（${modeName()}）${cal?"（已校准）":""}\n`+
-    `产区 ${b.country} · 品种 ${b.variety} · ${b.process} · ${b.level}\n`+
-    `入豆温度 ${p.charge}℃ | 回温 ${fmt(p.turn[0])}/${p.turn[1]}℃ | 黄化 ${fmt(p.yellow[0])}/${p.yellow[1]}℃\n`+
-    `一爆 ${fmt(p.fc[0])}/${p.fc[1]}℃ → 结束 ${fmt(p.fcEnd[0])} | 下豆 ${fmt(p.drop[0])}/${p.drop[1]}℃\n`+
-    `发展 ${fmt(p.dev)} | DTR ${p.dtr}% | 目标 Agtron 豆 ${(cal&&cal.ag)||b.ag}\n`+
-    `火力值曲线 ${p.power.map(x=>x[1]).join("→")}\n`+
-    `风力值曲线 ${p.air.map(x=>x[1]).join("→")}\n`+
-    (cal?`校准记录：${cal.note}（第 ${cal.sessions} 次）\n`:"")+
-    `风味 ${b.flavor}`;
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(()=>toast("参数已复制到剪贴板")).catch(()=>fallbackCopy(txt));
-  }else fallbackCopy(txt);
-}
+function copyParams(){toast("参数已复制");}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;
   t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600);}
 function refreshAll(){buildP();makeBT();refreshDash();drawChart();refreshTable();refreshDiag();renderCalib();}
